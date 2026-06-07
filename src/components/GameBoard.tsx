@@ -43,73 +43,54 @@ export function GameBoard({
         return (<div key={index} style={{ position: "absolute", left: pos.x, top: pos.y, width: 20, height: 20, borderRadius: "4px", background: bg, border: border, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px", color: txt, fontWeight: "bold" }}>{displayIndex}</div>);
       })}
 
-      {/* 👑 KÖZPONTI MEZŐ: INTEGRÁLT INTELIGENS DOBÓKOCKA */}
-      <div style={{
-        position: "absolute",
-        left: 150,
-        top: 150,
-        width: 120,
-        height: 120,
-        background: "#ffffff",
-        border: "3px solid #444",
-        borderRadius: "18px",
-        boxShadow: "inset 0 0 10px rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.1)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 50,
-        boxSizing: "border-box",
-        padding: "6px"
-      }}>
-        {/* Pörgő vagy fix kocka érték */}
+      {/* 👑 KÖZPONTI MEZŐ: MINI INTEGRÁLT DOBÓKOCKA (Tűpontos 60x60 méret) */}
+      <div 
+        onClick={() => canRoll && onRollDice()} // Így magára a dobozra kattintva is lehet dobni!
+        style={{
+          position: "absolute",
+          left: 180, // 150 helyett eltolva, hogy a 420-as tábla mértani közepén (180-240px) legyen
+          top: 180,  
+          width: 60,
+          height: 60,
+          background: canRoll ? "#ebdcfc" : "#ffffff", // Halvány lila, ha dobhatsz, hogy hívogatóbb legyen
+          border: canRoll ? "2.5px solid #6200ee" : "2px solid #555",
+          borderRadius: "12px",
+          boxShadow: canRoll ? "0 0 8px rgba(98,0,238,0.4)" : "inset 0 0 5px rgba(0,0,0,0.1)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 50,
+          boxSizing: "border-box",
+          cursor: canRoll ? "pointer" : "default",
+          transition: "all 0.2s ease"
+        }}
+      >
+        {/* Kocka száma vagy pörgés */}
         <div style={{ 
-          fontSize: isDiceRolling ? "36px" : "32px", 
+          fontSize: isDiceRolling ? "22px" : "24px", 
           fontWeight: "900", 
           lineHeight: "1",
-          marginBottom: "4px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center"
         }}>
-          <span className={isDiceRolling ? "rolling-dice" : ""} style={{ color: "#4caf50", display: "inline-block" }}>
+          <span className={isDiceRolling ? "rolling-dice" : ""} style={{ color: canRoll ? "#6200ee" : "#4caf50", display: "inline-block" }}>
             {isDiceRolling ? "🌀" : (gameData?.diceValue || "🎲")}
           </span>
         </div>
 
-        {/* Dinamikus Akció gomb / Állapotjelző */}
-        {canRoll ? (
-          <button 
-            onClick={onRollDice} 
-            style={{ 
-              padding: "5px 12px", 
-              fontSize: "12px", 
-              fontWeight: "bold", 
-              background: "#4caf50", 
-              color: "#fff", 
-              border: "none", 
-              borderRadius: "12px", 
-              cursor: "pointer",
-              boxShadow: "0 3px 6px rgba(76,175,80,0.4)",
-              textTransform: "uppercase",
-              letterSpacing: "0.5px"
-            }}
-          >
-            Dobás!
-          </button>
-        ) : (
-          <div style={{ 
-            fontSize: "10px", 
-            fontWeight: "bold", 
-            color: isMyTurn ? "#1e88e5" : "#e53935",
-            textAlign: "center",
-            padding: "2px 4px",
-            background: isMyTurn ? "#e3f2fd" : "#ffebee",
-            borderRadius: "6px"
-          }}>
-            {isMyTurn ? "LÉPÉS..." : "VÁRAKOZÁS"}
-          </div>
-        )}
+        {/* Pici felirat a kocka alatt */}
+        <div style={{ 
+          fontSize: "8px", 
+          fontWeight: "900", 
+          marginTop: "2px",
+          color: canRoll ? "#6200ee" : isMyTurn ? "#1e88e5" : "#e53935",
+          textTransform: "uppercase",
+          letterSpacing: "0.2px"
+        }}>
+          {canRoll ? "DOBB!" : isMyTurn ? "LÉPJ" : "WAIT"}
+        </div>
       </div>
 
       {/* BÁBÚK RENDERELÉSE */}
