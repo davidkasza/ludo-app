@@ -5,12 +5,9 @@ interface GameControlsProps {
   gameData: any;
   user: any;
   isMyTurn: boolean;
-  canRoll: boolean;
-  isDiceRolling: boolean;
   cheatDiceValue: number;
   setCheatDiceValue: (val: number) => void;
   statusMessage: string;
-  onRollDice: () => void;
   onMovePiece: (id: number) => void;
   onTeleportPiece: (id: number, val: string) => void;
   onSendChat: (msg: string) => void;
@@ -18,8 +15,8 @@ interface GameControlsProps {
 }
 
 export function GameControls({
-  gameData, user, isMyTurn, canRoll, isDiceRolling, cheatDiceValue, setCheatDiceValue,
-  statusMessage, onRollDice, onMovePiece, onTeleportPiece, onSendChat, getPlayerDisplayTitle
+  gameData, user, isMyTurn, cheatDiceValue, setCheatDiceValue,
+  statusMessage, onMovePiece, onTeleportPiece, onSendChat, getPlayerDisplayTitle
 }: GameControlsProps) {
   // Lokális állapot a teszt/cheat üzemmód panel lenyitásához
   const [showCheatPanel, setShowCheatPanel] = useState<boolean>(false);
@@ -27,33 +24,17 @@ export function GameControls({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%" }}>
       
-      {/* KOCKA VEZÉRLŐ ÉS INFORMÁCIÓS CSÍK EGYBEGYÚRVA */}
+      {/* INFORMÁCIÓS CSÍK */}
       <div style={{ 
-        display: "flex", 
-        alignItems: "center", 
-        justifyContent: "space-between", 
-        background: isMyTurn ? "#e3f2fd" : "#f5f5f5", 
-        border: isMyTurn ? "2px solid #1e88e5" : "1px solid #ddd",
         padding: "8px 12px", 
-        borderRadius: "10px" 
+        borderRadius: "10px",
+        background: isMyTurn ? "#e3f2fd" : "#f5f5f5", 
+        border: isMyTurn ? "2px solid #1e88e5" : "1px solid #ddd"
       }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "2px", flexGrow: 1 }}>
-          <div style={{ fontWeight: "bold", fontSize: "13px", color: isMyTurn ? "#1e88e5" : "#e53935" }}>
-            {gameData.status === "waiting" ? "Várakozás a csatlakozóra..." : isMyTurn ? (gameData.hasRolled ? "➡️ Lépj a gombokkal!" : "🟢 TE JÖSSZ!") : `⏳ Várakozás: ${getPlayerDisplayTitle(gameData.currentTurn)}`}
-          </div>
-          {statusMessage && <div style={{ color: "#2e7d32", fontSize: "11px", fontWeight: "bold" }}>{statusMessage}</div>}
+        <div style={{ fontWeight: "bold", fontSize: "13px", color: isMyTurn ? "#1e88e5" : "#e53935" }}>
+          {gameData.status === "waiting" ? "Várakozás a csatlakozóra..." : isMyTurn ? (gameData.hasRolled ? "➡️ Lépj a táblán vagy az alábbi gombokkal!" : "🟢 TE JÖSSZ! Dobj a tábla közepén!") : `⏳ Várakozás: ${getPlayerDisplayTitle(gameData.currentTurn)}`}
         </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <div style={{ fontSize: "13px", fontWeight: "bold", color: "#333" }}>
-            Kocka: <span className={isDiceRolling ? "rolling-dice" : ""} style={{ color: "#4caf50", fontSize: "20px", fontWeight: "900", display: "inline-block", verticalAlign: "middle" }}>
-              {isDiceRolling ? "🌀" : (gameData?.diceValue || "-")}
-            </span>
-          </div>
-          <button onClick={onRollDice} disabled={!canRoll} style={{ padding: "6px 14px", fontSize: "13px", borderRadius: "6px", border: "none", background: canRoll ? "#4caf50" : "#ccc", color: "#fff", fontWeight: "bold", cursor: canRoll ? "pointer" : "not-allowed" }}>
-            Dobás
-          </button>
-        </div>
+        {statusMessage && <div style={{ color: "#2e7d32", fontSize: "11px", marginTop: "2px", fontWeight: "bold" }}>{statusMessage}</div>}
       </div>
 
       {/* BÁBÚK SELEKTORA (VÍZSZINTES MOBILBARÁT KIJELZÉS) */}
@@ -75,7 +56,7 @@ export function GameControls({
                 background: isAtGoal ? "#fff9c4" : canMovePiece ? "#c8e6c9" : "#fff", 
                 border: canMovePiece ? "2px solid #2e7d32" : "1px solid #ddd", 
                 borderRadius: "8px", 
-                color: "#222222", // Fixált sötét betűszín
+                color: "#222222",
                 cursor: canMovePiece ? "pointer" : "not-allowed",
                 display: "flex",
                 flexDirection: "column",
@@ -137,7 +118,7 @@ export function GameControls({
         </div>
       )}
 
-      {/* CHAT PANEL - FIXÁLT BETŰSZÍNNEL */}
+      {/* CHAT PANEL */}
       <div style={{ background: "#f9f9f9", border: "1px solid #ddd", padding: "8px", borderRadius: "10px" }}>
         <span style={{ fontSize: "11px", fontWeight: "bold", color: "#555", display: "block", marginBottom: "4px" }}>💬 Gyors üzenet küldése:</span>
         <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
@@ -149,7 +130,7 @@ export function GameControls({
                 padding: "5px 8px", 
                 fontSize: "12px", 
                 background: "#ffffff", 
-                color: "#222222", // Kényszerített sötét betűszín, így nem lesz láthatatlan
+                color: "#222222", 
                 border: "1px solid #ccc", 
                 borderRadius: "6px", 
                 cursor: "pointer", 

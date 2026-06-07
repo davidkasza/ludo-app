@@ -7,7 +7,7 @@ import { GameControls } from "./components/GameControls";
 import { EndGame } from "./components/EndGame";
 
 export default function App() {
-  const [playerName, setPlayerName] = useState<string>("");
+  const [playerName, setPlayerName] = useState<string>("Dávid");
   const [selectedBoard, setSelectedBoard] = useState<string>("classic");
   const [isTestMode, setIsTestMode] = useState<boolean>(false);
   const [cheatDiceValue, setCheatDiceValue] = useState<number>(0);
@@ -105,17 +105,23 @@ export default function App() {
           </div>
         )}
 
-        {/* A JÁTÉKVEZÉRLŐK */}
+        {/* A JÁTÉKVEZÉRLŐK (Tisztítva, a kocka adatok nélkül) */}
         <div style={{ marginBottom: "10px" }}>
           <GameControls 
-            gameData={game.gameData} user={game.user} isMyTurn={game.isMyTurn} canRoll={game.canRoll} isDiceRolling={game.isDiceRolling}
-            cheatDiceValue={cheatDiceValue} setCheatDiceValue={setCheatDiceValue} statusMessage={game.statusMessage}
-            onRollDice={game.rollDice} onMovePiece={game.movePiece} onTeleportPiece={game.teleportPiece} onSendChat={game.sendQuickChat}
+            gameData={game.gameData} 
+            user={game.user} 
+            isMyTurn={game.isMyTurn}
+            cheatDiceValue={cheatDiceValue} 
+            setCheatDiceValue={setCheatDiceValue} 
+            statusMessage={game.statusMessage}
+            onMovePiece={game.movePiece} 
+            onTeleportPiece={game.teleportPiece} 
+            onSendChat={game.sendQuickChat}
             getPlayerDisplayTitle={game.getPlayerDisplayTitle}
           />
         </div>
 
-        {/* A KIRAJZOLT TÁBLA - Automatikus mobilra skálázással */}
+        {/* A KIRAJZOLT TÁBLA - Integrált középső dobókockával */}
         <div style={{ 
           display: "flex", 
           justifyContent: "center", 
@@ -125,8 +131,16 @@ export default function App() {
         }}>
           <div style={{ width: "100%", maxWidth: "410px" }}>
             <GameBoard
-              board={game.board} gameData={game.gameData} user={game.user} localMovingPiece={game.localMovingPiece}
-              myPlayerIndex={game.myPlayerIndex} getPlayerIndex={game.getPlayerIndex} onPieceClick={game.movePiece}
+              board={game.board} 
+              gameData={game.gameData} 
+              user={game.user} 
+              localMovingPiece={game.localMovingPiece}
+              myPlayerIndex={game.myPlayerIndex} 
+              getPlayerIndex={game.getPlayerIndex} 
+              onPieceClick={game.movePiece}
+              onRollDice={game.rollDice}
+              canRoll={game.canRoll}
+              isDiceRolling={game.isDiceRolling}
             />
           </div>
         </div>

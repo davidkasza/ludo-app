@@ -7,13 +7,20 @@ interface GameBoardProps {
   myPlayerIndex: number;
   getPlayerIndex: (uid: string) => number;
   onPieceClick: (id: number) => void;
+  onRollDice: () => void;
+  canRoll: boolean;
+  isDiceRolling: boolean;
 }
 
 export function GameBoard({
-  board, gameData, user, localMovingPiece, myPlayerIndex, getPlayerIndex, onPieceClick
+  board, gameData, user, localMovingPiece, myPlayerIndex, getPlayerIndex, onPieceClick,
+  onRollDice, canRoll, isDiceRolling
 }: GameBoardProps) {
+  
+  const isMyTurn = gameData?.currentTurn === user?.uid;
+
   return (
-    <div style={{ position: "relative", width: 420, height: 420, border: "3px solid #333", borderRadius: "12px", background: "#fafafa" }}>
+    <div style={{ position: "relative", width: 420, height: 420, border: "3px solid #333", borderRadius: "12px", background: "#fafafa", userSelect: "none" }}>
       {/* BÁZISOK */}
       {board?.p1Base?.map((pos: any, idx: number) => <div key={`p1b-${idx}`} style={{ position: "absolute", left: pos.x, top: pos.y, width: 20, height: 20, background: "rgba(30, 136, 229, 0.15)", border: "1px dashed #1e88e5", borderRadius: "4px" }} />)}
       {board?.p2Base?.map((pos: any, idx: number) => <div key={`p2b-${idx}`} style={{ position: "absolute", left: pos.x, top: pos.y, width: 20, height: 20, background: "rgba(229, 57, 117, 0.15)", border: "1px dashed #e53935", borderRadius: "4px" }} />)}
@@ -35,6 +42,75 @@ export function GameBoard({
         
         return (<div key={index} style={{ position: "absolute", left: pos.x, top: pos.y, width: 20, height: 20, borderRadius: "4px", background: bg, border: border, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px", color: txt, fontWeight: "bold" }}>{displayIndex}</div>);
       })}
+
+      {/* 👑 KÖZPONTI MEZŐ: INTEGRÁLT INTELIGENS DOBÓKOCKA */}
+      <div style={{
+        position: "absolute",
+        left: 150,
+        top: 150,
+        width: 120,
+        height: 120,
+        background: "#ffffff",
+        border: "3px solid #444",
+        borderRadius: "18px",
+        boxShadow: "inset 0 0 10px rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.1)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 50,
+        boxSizing: "border-box",
+        padding: "6px"
+      }}>
+        {/* Pörgő vagy fix kocka érték */}
+        <div style={{ 
+          fontSize: isDiceRolling ? "36px" : "32px", 
+          fontWeight: "900", 
+          lineHeight: "1",
+          marginBottom: "4px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}>
+          <span className={isDiceRolling ? "rolling-dice" : ""} style={{ color: "#4caf50", display: "inline-block" }}>
+            {isDiceRolling ? "🌀" : (gameData?.diceValue || "🎲")}
+          </span>
+        </div>
+
+        {/* Dinamikus Akció gomb / Állapotjelző */}
+        {canRoll ? (
+          <button 
+            onClick={onRollDice} 
+            style={{ 
+              padding: "5px 12px", 
+              fontSize: "12px", 
+              fontWeight: "bold", 
+              background: "#4caf50", 
+              color: "#fff", 
+              border: "none", 
+              borderRadius: "12px", 
+              cursor: "pointer",
+              boxShadow: "0 3px 6px rgba(76,175,80,0.4)",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px"
+            }}
+          >
+            Dobás!
+          </button>
+        ) : (
+          <div style={{ 
+            fontSize: "10px", 
+            fontWeight: "bold", 
+            color: isMyTurn ? "#1e88e5" : "#e53935",
+            textAlign: "center",
+            padding: "2px 4px",
+            background: isMyTurn ? "#e3f2fd" : "#ffebee",
+            borderRadius: "6px"
+          }}>
+            {isMyTurn ? "LÉPÉS..." : "VÁRAKOZÁS"}
+          </div>
+        )}
+      </div>
 
       {/* BÁBÚK RENDERELÉSE */}
       {gameData?.pieces &&
@@ -66,7 +142,6 @@ export function GameBoard({
             if (!coords) return null;
 
             const isAtGoal = p.inHome && p.pos === 5;
-            const isMyTurn = gameData?.currentTurn === user?.uid;
             const canClickOnBoard = isCurrentPlayer && isMyTurn && gameData.hasRolled && !isAtGoal && gameData.status === "playing" && !localMovingPiece;
 
             return (
@@ -76,7 +151,7 @@ export function GameBoard({
                 className={isHopping ? "hopping-piece" : ""}
                 style={{
                   position: "absolute", left: coords.x + 2, top: coords.y - 1, width: 16, height: 20,
-                  zIndex: 10 + p.id + (canClickOnBoard ? 20 : 0) + (isAtGoal ? -5 : 0),
+                  zIndex: 100 + p.id + (canClickOnBoard ? 20 : 0) + (isAtGoal ? -5 : 0),
                   transition: isHopping ? "none" : "all 0.2s linear", display: "flex", flexDirection: "column", alignItems: "center",
                   cursor: canClickOnBoard ? "pointer" : "default",
                   filter: canClickOnBoard ? "drop-shadow(0px 4px 5px rgba(0,0,0,0.4))" : isAtGoal ? "grayscale(30%) opacity(0.8)" : "none",
