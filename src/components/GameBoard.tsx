@@ -1,19 +1,16 @@
 // src/components/GameBoard.tsx
-import React from "react";
-
 interface GameBoardProps {
   board: any;
   gameData: any;
   user: any;
   localMovingPiece: any;
   myPlayerIndex: number;
-  globalSafePlaces: number[];
   getPlayerIndex: (uid: string) => number;
   onPieceClick: (id: number) => void;
 }
 
 export function GameBoard({
-  board, gameData, user, localMovingPiece, myPlayerIndex, globalSafePlaces, getPlayerIndex, onPieceClick
+  board, gameData, user, localMovingPiece, myPlayerIndex, getPlayerIndex, onPieceClick
 }: GameBoardProps) {
   return (
     <div style={{ position: "relative", width: 420, height: 420, border: "3px solid #333", borderRadius: "12px", background: "#fafafa" }}>

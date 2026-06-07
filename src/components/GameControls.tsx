@@ -1,6 +1,4 @@
 // src/components/GameControls.tsx
-import React from "react";
-
 interface GameControlsProps {
   gameData: any;
   user: any;

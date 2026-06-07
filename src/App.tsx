@@ -81,7 +81,7 @@ export default function App() {
         <div style={{ display: "flex", justifyContent: "center" }}>
           <GameBoard
             board={game.board} gameData={game.gameData} user={game.user} localMovingPiece={game.localMovingPiece}
-            myPlayerIndex={game.myPlayerIndex} globalSafePlaces={game.globalSafePlaces} getPlayerIndex={game.getPlayerIndex} onPieceClick={game.movePiece}
+            myPlayerIndex={game.myPlayerIndex} getPlayerIndex={game.getPlayerIndex} onPieceClick={game.movePiece}
           />
         </div>
       </div>

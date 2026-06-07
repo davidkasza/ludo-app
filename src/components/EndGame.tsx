@@ -1,6 +1,4 @@
 // src/components/EndGame.tsx
-import React from "react";
-
 interface EndGameProps {
   iWon: boolean;
   winnerName: string;

@@ -39,7 +39,6 @@ export function useLudoGame(selectedBoard: string, isTestMode: boolean, cheatDic
 
   // 🔥 JAVÍTVA: Itt van a lokális board definíció
   const board = boards[gameData?.boardId || selectedBoard || "classic"];
-  const boardSize = board?.positions?.length || 52;
 
   const getPlayerIndex = (uid: string) => {
     if (!gameData?.players) return 0;
@@ -283,6 +282,8 @@ export function useLudoGame(selectedBoard: string, isTestMode: boolean, cheatDic
       bonusRollAvailable = true;
       setStatusMessage("🎉 Bábu a célban! Jutalmad egy extra dobás!");
     }
+
+    console.log(bonusRollAvailable);
 
     const finalAllPieces = { ...gameData.pieces, [user!.uid]: updatedPieces };
     if (opponentUid && opponentPieces) { finalAllPieces[opponentUid] = opponentPieces; }
