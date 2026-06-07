@@ -21,7 +21,7 @@ export function useLudoGame(selectedBoard: string, isTestMode: boolean, cheatDic
   const [gameData, setGameData] = useState<any>(null);
   const [statusMessage, setStatusMessage] = useState<string>("");
   
-  // UI Animációs állapotok
+  // UI Animation States
   const [isDiceRolling, setIsDiceRolling] = useState<boolean>(false);
   const [localMovingPiece, setLocalMovingPiece] = useState<any>(null);
 
@@ -37,7 +37,7 @@ export function useLudoGame(selectedBoard: string, isTestMode: boolean, cheatDic
     test: testBoard
   };
 
-  // 🔥 JAVÍTVA: Itt van a lokális board definíció
+  // Local board configuration resolution
   const board = boards[gameData?.boardId || selectedBoard || "classic"];
 
   const getPlayerIndex = (uid: string) => {
@@ -49,10 +49,10 @@ export function useLudoGame(selectedBoard: string, isTestMode: boolean, cheatDic
   const isMyTurn = gameData?.currentTurn === user?.uid;
   const globalSafePlaces = [0, 3, 8, 16, 21, 26, 29, 34, 42, 47];
 
-  // 🔥 JAVÍTVA: A hiányzó névleolvasó függvény visszakerült a hook törzsébe!
+  // Formats player label fallsback dynamically
   const getPlayerDisplayTitle = (uid: string) => {
     if (!gameData?.playerNames || !gameData.playerNames[uid]) {
-      return getPlayerIndex(uid) === 0 ? "KÉK (P1)" : "PIROS (P2)";
+      return getPlayerIndex(uid) === 0 ? "BLUE (P1)" : "RED (P2)";
     }
     return gameData.playerNames[uid];
   };
@@ -102,13 +102,13 @@ export function useLudoGame(selectedBoard: string, isTestMode: boolean, cheatDic
     const snap = await getDoc(ref);
 
     if (!snap.exists()) {
-      setStatusMessage("❌ A játék nem található!");
+      setStatusMessage("❌ Game match not found!");
       return;
     }
 
     const data = snap.data();
     if (data.players.length >= 2) {
-      setStatusMessage("❌ Ez a játék már megtelt!");
+      setStatusMessage("❌ This room is already full!");
       return;
     }
 
@@ -157,7 +157,7 @@ export function useLudoGame(selectedBoard: string, isTestMode: boolean, cheatDic
 
       if (!hasValidMove) {
         if (value === 6) {
-          setStatusMessage(`🎲 6-ost dobtál, de nincs lépésed! Dobhatsz újra!`);
+          setStatusMessage(`🎲 Rolled a 6! But you have no legal moves available. Roll again!`);
           await updateDoc(doc(db, "games", gameId), {
             diceValue: value,
             hasRolled: false, 
@@ -165,7 +165,7 @@ export function useLudoGame(selectedBoard: string, isTestMode: boolean, cheatDic
           });
         } else {
           const nextPlayer = gameData.players.find((p: string) => p !== user.uid) || user.uid;
-          setStatusMessage(`🎲 Dobás: ${value}. Nincs szabályos lépésed, a kör átugrott!`);
+          setStatusMessage(`🎲 Rolled: ${value}. No legal moves available, turn skipped!`);
           await updateDoc(doc(db, "games", gameId), {
             diceValue: value,
             hasRolled: false,
@@ -190,11 +190,11 @@ export function useLudoGame(selectedBoard: string, isTestMode: boolean, cheatDic
 
     if (targetPiece.pos === 5 && targetPiece.inHome) return;
     if (targetPiece.pos === -1 && dice !== 6) {
-      setStatusMessage("⚠️ Onnan csak 6-os dobással jöhetsz ki!");
+      setStatusMessage("⚠️ You can only move out of the base yard with a roll of 6!");
       return;
     }
     if (targetPiece.inHome && targetPiece.pos + dice > 5) {
-      setStatusMessage("⚠️ Túl nagyot dobtál, pontosan a célba kell érned!");
+      setStatusMessage("⚠️ Roll too high! You must hit the home goal exactly.");
       return;
     }
 
@@ -272,18 +272,18 @@ export function useLudoGame(selectedBoard: string, isTestMode: boolean, cheatDic
     if (dice === 6) {
       nextPlayer = user!.uid; 
       bonusRollAvailable = true;
-      setStatusMessage("✨ 6-ost dobtál! Te jössz újra!");
+      setStatusMessage("✨ Rolled a 6! You get an extra roll!");
     } else if (didCapture) {
       nextPlayer = user!.uid; 
       bonusRollAvailable = true;
-      setStatusMessage("💥 Leütötted az ellenfél bábuját! Bónusz dobás jár!");
+      setStatusMessage("💥 Captured an opponent's token! Bonus roll awarded!");
     } else if (didReachGoal) {
       nextPlayer = user!.uid;
       bonusRollAvailable = true;
-      setStatusMessage("🎉 Bábu a célban! Jutalmad egy extra dobás!");
+      setStatusMessage("🎉 Token reached the home goal! Enjoy an extra roll!");
     }
 
-    console.log(bonusRollAvailable);
+    console.log("Bonus roll state:", bonusRollAvailable);
 
     const finalAllPieces = { ...gameData.pieces, [user!.uid]: updatedPieces };
     if (opponentUid && opponentPieces) { finalAllPieces[opponentUid] = opponentPieces; }
@@ -333,6 +333,6 @@ export function useLudoGame(selectedBoard: string, isTestMode: boolean, cheatDic
     canRoll: isMyTurn && gameData && !gameData.hasRolled && gameData.status === "playing" && !isDiceRolling,
     createGame, joinGame, rollDice, movePiece, teleportPiece, sendQuickChat, quitToMenu, 
     getPlayerIndex, getPlayerDisplayTitle, globalSafePlaces, 
-    board // 🔥 JAVÍTVA: A board-ot is visszaadjuk a hook végén!
+    board
   };
 }
