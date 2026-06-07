@@ -5,9 +5,12 @@ interface GameControlsProps {
   gameData: any;
   user: any;
   isMyTurn: boolean;
+  canRoll: boolean;
+  isDiceRolling: boolean;
   cheatDiceValue: number;
   setCheatDiceValue: (val: number) => void;
   statusMessage: string;
+  onRollDice: () => void;
   onMovePiece: (id: number) => void;
   onTeleportPiece: (id: number, val: string) => void;
   onSendChat: (msg: string) => void;
@@ -15,29 +18,86 @@ interface GameControlsProps {
 }
 
 export function GameControls({
-  gameData, user, isMyTurn, cheatDiceValue, setCheatDiceValue,
-  statusMessage, onMovePiece, onTeleportPiece, onSendChat, getPlayerDisplayTitle
+  gameData, user, isMyTurn, canRoll, isDiceRolling, cheatDiceValue, setCheatDiceValue,
+  statusMessage, onRollDice, onMovePiece, onTeleportPiece, onSendChat, getPlayerDisplayTitle
 }: GameControlsProps) {
-  // Lokális állapot a teszt/cheat üzemmód panel lenyitásához
   const [showCheatPanel, setShowCheatPanel] = useState<boolean>(false);
+
+  const turnColor = gameData?.currentTurn === user?.uid ? "#1e88e5" : "#e53935";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%" }}>
       
-      {/* INFORMÁCIÓS CSÍK */}
+      {/* LUDO KING MODELLŰ KOCKA ÉS PROFIL PANEL */}
       <div style={{ 
-        padding: "8px 12px", 
-        borderRadius: "10px",
-        background: isMyTurn ? "#e3f2fd" : "#f5f5f5", 
-        border: isMyTurn ? "2px solid #1e88e5" : "1px solid #ddd"
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "space-between", 
+        background: isMyTurn ? "linear-gradient(135deg, #e3f2fd 0%, #c8e6c9 100%)" : "#f5f5f5", 
+        border: isMyTurn ? "2.5px solid #2e7d32" : "1px solid #ddd",
+        padding: "10px 14px", 
+        borderRadius: "14px",
+        boxShadow: isMyTurn ? "0 4px 12px rgba(46,125,50,0.15)" : "none",
+        animation: canRoll ? "pulsePanel 1.5s infinite ease-in-out" : "none"
       }}>
-        <div style={{ fontWeight: "bold", fontSize: "13px", color: isMyTurn ? "#1e88e5" : "#e53935" }}>
-          {gameData.status === "waiting" ? "Várakozás a csatlakozóra..." : isMyTurn ? (gameData.hasRolled ? "➡️ Lépj a táblán vagy az alábbi gombokkal!" : "🟢 TE JÖSSZ! Dobj a tábla közepén!") : `⏳ Várakozás: ${getPlayerDisplayTitle(gameData.currentTurn)}`}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexGrow: 1 }}>
+          <div style={{ 
+            width: "32px", 
+            height: "32px", 
+            borderRadius: "50%", 
+            background: turnColor, 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center",
+            fontSize: "16px",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
+          }}>
+            👤
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+            <div style={{ fontWeight: "900", fontSize: "13px", color: "#222" }}>
+              {gameData.status === "waiting" ? "Várakozás..." : isMyTurn ? "TE KÖRÖD!" : getPlayerDisplayTitle(gameData.currentTurn)}
+            </div>
+            <div style={{ fontSize: "11px", color: "#666", fontWeight: "bold" }}>
+              {isMyTurn ? (gameData.hasRolled ? "Lépj egy bábuddal!" : "Bökj a gombra a dobáshoz!") : "Várakozás az ellenfélre..."}
+            </div>
+          </div>
         </div>
-        {statusMessage && <div style={{ color: "#2e7d32", fontSize: "11px", marginTop: "2px", fontWeight: "bold" }}>{statusMessage}</div>}
+
+        {/* INTERAKTÍV DOBÓKOCKA GOMB - JAVÍTOTT HÁTTÉRSZÍNNEL */}
+        <button 
+          onClick={onRollDice} 
+          disabled={!canRoll}
+          style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            gap: "10px",
+            padding: "8px 14px",
+            background: canRoll ? "linear-gradient(135deg, #ffffff 0%, #f1e7fe 100%)" : "#e0e0e0", // Fixált CSS színkód szóköz nélkül!
+            border: canRoll ? "2px solid #6200ee" : "1.5px solid #bbb",
+            borderRadius: "12px",
+            cursor: canRoll ? "pointer" : "not-allowed",
+            boxShadow: canRoll ? "0 4px 8px rgba(98,0,238,0.3), inset 0 -2px 3px rgba(98,0,238,0.2)" : "none",
+            transition: "all 0.15s ease",
+            color: "#333333"
+          }}
+        >
+          <span style={{ fontSize: "12px", fontWeight: "bold", color: canRoll ? "#6200ee" : "#666" }}>
+            {canRoll ? "DOBÁS:" : "SZÁM:"}
+          </span>
+          <div className={isDiceRolling ? "rolling-dice" : ""} style={{ fontSize: "24px", minWidth: "28px", textAlign: "center", lineHeight: "1", color: "#222222", fontWeight: "bold" }}>
+            {isDiceRolling ? "🌀" : (gameData?.diceValue || "🎲")}
+          </div>
+        </button>
       </div>
 
-      {/* BÁBÚK SELEKTORA (VÍZSZINTES MOBILBARÁT KIJELZÉS) */}
+      {statusMessage && (
+        <div style={{ background: "#e8f5e9", color: "#2e7d32", fontSize: "11px", fontWeight: "bold", padding: "4px 10px", borderRadius: "6px", textAlign: "center", border: "1px solid #c8e6c9" }}>
+          {statusMessage}
+        </div>
+      )}
+
+      {/* BÁBÚK SELEKTORA */}
       <div style={{ display: "flex", justifyContent: "space-between", gap: "4px", margin: "2px 0" }}>
         {gameData?.pieces?.[user?.uid ?? ""]?.map((p: any) => {
           const isAtGoal = p.inHome && p.pos === 5;
@@ -74,7 +134,7 @@ export function GameControls({
         })}
       </div>
 
-      {/* CHEAT PANEL ELREJTVE (Csak ha aktív a teszt mód) */}
+      {/* CHEAT PANEL */}
       {gameData.isTestModeActive && (
         <div style={{ background: "#fffde7", border: "1px solid #fbc02d", borderRadius: "8px", padding: "4px 8px" }}>
           <button 
@@ -86,7 +146,6 @@ export function GameControls({
           
           {showCheatPanel && (
             <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "6px", paddingBottom: "4px" }}>
-              {/* Cheat kockaválasztó */}
               {isMyTurn && !gameData.hasRolled && (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fff", padding: "4px", borderRadius: "4px", border: "1px solid #ffe082" }}>
                   <span style={{ fontSize: "11px", fontWeight: "bold", color: "#b78103" }}>🔮 Következő dobás:</span>
@@ -96,7 +155,6 @@ export function GameControls({
                   </select>
                 </div>
               )}
-              {/* Teleport gombok a bábukhoz */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "4px" }}>
                 {gameData?.pieces?.[user?.uid ?? ""]?.map((p: any) => {
                   const currentSelectValue = p.pos === -1 ? "-1" : p.inHome ? `H${p.pos}` : `${p.pos}`;

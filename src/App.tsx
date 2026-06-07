@@ -11,25 +11,20 @@ export default function App() {
   const [selectedBoard, setSelectedBoard] = useState<string>("classic");
   const [isTestMode, setIsTestMode] = useState<boolean>(false);
   const [cheatDiceValue, setCheatDiceValue] = useState<number>(0);
-  
-  // Lokális állapot a chat buborék garantált eltüntetéséhez
   const [showToast, setShowToast] = useState<boolean>(false);
 
-  // Az összes játéklogika és Firebase szinkronizáció egy helyen
   const game = useLudoGame(selectedBoard, isTestMode, cheatDiceValue);
 
-  // Figyeljük, ha új chat üzenet érkezik, és elindítunk egy garantált kliensoldali időzítőt
   useEffect(() => {
     if (game.gameData?.activeChat?.message) {
       setShowToast(true);
       const timer = setTimeout(() => {
         setShowToast(false);
-      }, 3500); // 3.5 másodperc után eltűnik
+      }, 3500);
       return () => clearTimeout(timer);
     }
   }, [game.gameData?.activeChat?.message, game.gameData?.activeChat?.timestamp]);
 
-  // 1️⃣ KÉPERNYŐ: GYŐZELMI INFÓK
   if (game.gameData?.status === "finished") {
     const iWon = game.gameData.winnerUid === game.user?.uid;
     const winnerColor = game.getPlayerIndex(game.gameData.winnerUid) === 0 ? "KÉK" : "PIROS";
@@ -43,7 +38,6 @@ export default function App() {
     );
   }
 
-  // 2️⃣ KÉPERNYŐ: GAMEPLAY SCREEN
   if (game.gameData) {
     return (
       <div style={{ 
@@ -52,36 +46,28 @@ export default function App() {
         color: "#333", 
         maxWidth: "100vw", 
         margin: "0 auto",
-        overflowX: "hidden", // Megakadályozza az oldalra görgetést
+        overflowX: "hidden",
         boxSizing: "border-box"
       }}>
         
-        {/* CSS Keyframes az animációkhoz */}
         <style>{`
           @keyframes diceSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
           @keyframes hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+          @keyframes pulsePanel {
+            0% { box-shadow: 0 4px 12px rgba(46,125,50,0.15); }
+            50% { box-shadow: 0 4px 20px rgba(46,125,50,0.4); border-color: #4caf50; }
+            100% { box-shadow: 0 4px 12px rgba(46,125,50,0.15); }
+          }
           .rolling-dice { animation: diceSpin 0.4s linear infinite; }
           .hopping-piece { animation: hop 0.25s ease-in-out infinite; }
         `}</style>
 
-        {/* Lebegő nemzetközi chat buborék - Fixált kliensoldali időzítéssel */}
         {showToast && game.gameData.activeChat?.message && (
           <div style={{ 
-            position: "fixed", 
-            top: "12%", 
-            left: "50%", 
-            transform: "translateX(-50%)", 
-            background: "rgba(0,0,0,0.9)", 
-            color: "#fff", 
-            padding: "12px 24px", 
-            borderRadius: "25px", 
-            zIndex: 9999, 
-            fontWeight: "bold",
-            boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
-            textAlign: "center",
-            width: "80%",
-            maxWidth: "350px",
-            fontSize: "14px"
+            position: "fixed", top: "12%", left: "50%", transform: "translateX(-50%)", 
+            background: "rgba(0,0,0,0.9)", color: "#fff", padding: "12px 24px", borderRadius: "25px", 
+            zIndex: 9999, fontWeight: "bold", boxShadow: "0 4px 15px rgba(0,0,0,0.3)", textAlign: "center", 
+            width: "80%", maxWidth: "350px", fontSize: "14px"
           }}>
             💬 {game.getPlayerDisplayTitle(game.gameData.activeChat.sender)}: {game.gameData.activeChat.message}
           </div>
@@ -98,22 +84,24 @@ export default function App() {
           <div style={{ fontSize: "10px", background: "#fff", padding: "3px 6px", borderRadius: "4px" }}>Kód: <code>{game.gameId}</code></div>
         </div>
 
-        {/* Várakozási fázis */}
         {game.gameData.status === "waiting" && (
           <div style={{ background: "#fff8e1", border: "1px solid #ffe082", padding: "10px", borderRadius: "8px", textAlign: "center", marginBottom: "10px", fontSize: "13px", fontWeight: "bold", color: "#b78103" }}>
             ⏳ Várakozás az ellenfélre...
           </div>
         )}
 
-        {/* A JÁTÉKVEZÉRLŐK (Tisztítva, a kocka adatok nélkül) */}
+        {/* A JÁTÉKVEZÉRLŐK */}
         <div style={{ marginBottom: "10px" }}>
           <GameControls 
             gameData={game.gameData} 
             user={game.user} 
             isMyTurn={game.isMyTurn}
+            canRoll={game.canRoll}
+            isDiceRolling={game.isDiceRolling}
             cheatDiceValue={cheatDiceValue} 
             setCheatDiceValue={setCheatDiceValue} 
             statusMessage={game.statusMessage}
+            onRollDice={game.rollDice}
             onMovePiece={game.movePiece} 
             onTeleportPiece={game.teleportPiece} 
             onSendChat={game.sendQuickChat}
@@ -121,34 +109,31 @@ export default function App() {
           />
         </div>
 
-        {/* A KIRAJZOLT TÁBLA - Integrált középső dobókockával */}
+        {/* A KIRAJZOLT TÁBLA - Tisztán reszponzív, szétesés- és skálázásmentes elrendezés */}
         <div style={{ 
           display: "flex", 
           justifyContent: "center", 
+          alignItems: "center",
           width: "100%",
-          overflow: "hidden",
-          touchAction: "manipulation"
+          maxWidth: "450px", // Tablet/Asztali nézet korlát, hogy ne nyúljon túl nagyra
+          margin: "14px auto",
+          touchAction: "manipulation",
+          boxSizing: "border-box"
         }}>
-          <div style={{ width: "100%", maxWidth: "410px" }}>
-            <GameBoard
-              board={game.board} 
-              gameData={game.gameData} 
-              user={game.user} 
-              localMovingPiece={game.localMovingPiece}
-              myPlayerIndex={game.myPlayerIndex} 
-              getPlayerIndex={game.getPlayerIndex} 
-              onPieceClick={game.movePiece}
-              onRollDice={game.rollDice}
-              canRoll={game.canRoll}
-              isDiceRolling={game.isDiceRolling}
-            />
-          </div>
+          <GameBoard
+            board={game.board} 
+            gameData={game.gameData} 
+            user={game.user} 
+            localMovingPiece={game.localMovingPiece}
+            myPlayerIndex={game.myPlayerIndex} 
+            getPlayerIndex={game.getPlayerIndex} 
+            onPieceClick={game.movePiece}
+          />
         </div>
       </div>
     );
   }
 
-  // 3️⃣ KÉPERNYŐ: ALAPÉRTELMEZETT FŐMENÜ / LOBBY
   return (
     <Lobby
       playerName={playerName} setPlayerName={setPlayerName} selectedBoard={selectedBoard} setSelectedBoard={setSelectedBoard}

@@ -1,7 +1,8 @@
 // boards/classicBoard.ts
 
-const STEP = 25; 
-const OFFSET = 20; 
+// 💥 JELENTŐS NÖVELÉS: 25 -> 50. Ez megnöveli a mezők méretét és távolságát.
+const STEP = 50; 
+const OFFSET = 20; // A tábla szélétől való eltolás maradhat.
 
 const gridPath = [
   // ÉSZAKI (FELSŐ) ÁG
@@ -26,7 +27,7 @@ const gridPath = [
 const player1BaseGrid = [{ x: 2, y: 2 }, { x: 3, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 3 }]; // Kék bázis
 const player2BaseGrid = [{ x: 11, y: 11 }, { x: 12, y: 11 }, { x: 11, y: 12 }, { x: 12, y: 12 }]; // Piros bázis
 
-// 🔥 ÚJ: Befutó sávok koordinátái (5 mező + 1 központi célmező)
+// Befutó sávok koordinátái
 const p1HomeGrid = [
   { x: 7, y: 1 }, { x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }, // Befutó (index: 0-4)
   { x: 7, y: 6 } // Abszolút CÉL (index: 5)
@@ -37,13 +38,13 @@ const p2HomeGrid = [
   { x: 7, y: 8 } // Abszolút CÉL (index: 5)
 ];
 
+// A pixel koordináták kiszámítása a megnövelt STEP értékkel
 export const classicBoard = {
   id: "classic",
   size: 52,
   positions: gridPath.map(pos => ({ x: OFFSET + pos.x * STEP, y: OFFSET + pos.y * STEP })),
   p1Base: player1BaseGrid.map(pos => ({ x: OFFSET + pos.x * STEP, y: OFFSET + pos.y * STEP })),
   p2Base: player2BaseGrid.map(pos => ({ x: OFFSET + pos.x * STEP, y: OFFSET + pos.y * STEP })),
-  // Pixel koordináták a befutókhoz
   p1Home: p1HomeGrid.map(pos => ({ x: OFFSET + pos.x * STEP, y: OFFSET + pos.y * STEP })),
   p2Home: p2HomeGrid.map(pos => ({ x: OFFSET + pos.x * STEP, y: OFFSET + pos.y * STEP }))
 };
