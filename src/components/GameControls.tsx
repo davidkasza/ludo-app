@@ -13,13 +13,12 @@ interface GameControlsProps {
   onRollDice: () => void;
   onMovePiece: (id: number) => void;
   onTeleportPiece: (id: number, val: string) => void;
-  onSendChat: (msg: string) => void;
   getPlayerDisplayTitle: (uid: string) => string;
 }
 
 export function GameControls({
   gameData, user, isMyTurn, canRoll, isDiceRolling, cheatDiceValue, setCheatDiceValue,
-  statusMessage, onRollDice, onMovePiece, onTeleportPiece, onSendChat, getPlayerDisplayTitle
+  statusMessage, onRollDice, onMovePiece, onTeleportPiece, getPlayerDisplayTitle
 }: GameControlsProps) {
   const [showCheatPanel, setShowCheatPanel] = useState<boolean>(false);
 
@@ -97,7 +96,7 @@ export function GameControls({
         </div>
       )}
 
-      {/* TOKENS SELECTOR PANEL - Now explicitly tied to gameData.isTestModeActive */}
+      {/* TOKENS PANEL */}
       {gameData?.isTestModeActive && (
         <div style={{ display: "flex", justifyContent: "space-between", gap: "4px", margin: "2px 0" }}>
           {gameData?.pieces?.[user?.uid ?? ""]?.map((p: any) => {
@@ -177,32 +176,6 @@ export function GameControls({
           )}
         </div>
       )}
-
-      {/* QUICK CHAT PANEL */}
-      <div style={{ background: "#f9f9f9", border: "1px solid #ddd", padding: "8px", borderRadius: "10px" }}>
-        <span style={{ fontSize: "11px", fontWeight: "bold", color: "#555", display: "block", marginBottom: "4px" }}>💬 Quick Chat Emotes:</span>
-        <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-          {["Sorry! 🙏", "Ouch! 💥", "Love it! ❤️", "Good luck! 🍀", "😂", "😎", "🔥"].map(msg => (
-            <button 
-              key={msg} 
-              onClick={() => onSendChat(msg)} 
-              style={{ 
-                padding: "5px 8px", 
-                fontSize: "12px", 
-                background: "#ffffff", 
-                color: "#222222", 
-                border: "1px solid #ccc", 
-                borderRadius: "6px", 
-                cursor: "pointer", 
-                fontWeight: "bold",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
-              }}
-            >
-              {msg}
-            </button>
-          ))}
-        </div>
-      </div>
 
     </div>
   );

@@ -90,14 +90,40 @@ export default function App() {
           </div>
         )}
 
-        {/* 1. THE GAME BOARD (Now positioned upper on the layout sheet) */}
+        {/* 1. 🔥 QUICK CHAT EMOTES AT THE TOP */}
+        <div style={{ background: "#f9f9f9", border: "1px solid #ddd", padding: "8px", borderRadius: "10px", marginBottom: "12px" }}>
+          <span style={{ fontSize: "11px", fontWeight: "bold", color: "#555", display: "block", marginBottom: "4px" }}>💬 Quick Chat Emotes:</span>
+          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+            {["Sorry! 🙏", "Ouch! 💥", "Love it! ❤️", "Good luck! 🍀", "😂", "😎", "🔥"].map(msg => (
+              <button 
+                key={msg} 
+                onClick={() => game.sendQuickChat(msg)} 
+                style={{ 
+                  padding: "5px 8px", 
+                  fontSize: "12px", 
+                  background: "#ffffff", 
+                  color: "#222222", 
+                  border: "1px solid #ccc", 
+                  borderRadius: "6px", 
+                  cursor: "pointer", 
+                  fontWeight: "bold",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                }}
+              >
+                {msg}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 2. 🔥 THE GAME BOARD IN THE MIDDLE */}
         <div style={{ 
           display: "flex", 
           justifyContent: "center", 
           alignItems: "center",
           width: "100%",
           maxWidth: "450px", 
-          margin: "10px auto 16px",
+          margin: "0 auto 14px",
           touchAction: "manipulation",
           boxSizing: "border-box"
         }}>
@@ -112,7 +138,7 @@ export default function App() {
           />
         </div>
 
-        {/* 2. THE GAME CONTROLS (Moved down here underneath the Game Board) */}
+        {/* 3. 🔥 THE GAME CONTROLS (DICE & PROFILE) AT THE BOTTOM */}
         <div style={{ marginBottom: "10px" }}>
           <GameControls 
             gameData={game.gameData} 
@@ -126,7 +152,6 @@ export default function App() {
             onRollDice={game.rollDice}
             onMovePiece={game.movePiece} 
             onTeleportPiece={game.teleportPiece} 
-            onSendChat={game.sendQuickChat}
             getPlayerDisplayTitle={game.getPlayerDisplayTitle}
           />
         </div>
