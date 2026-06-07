@@ -1,4 +1,6 @@
 // src/components/GameBoard.tsx
+import { useEffect, useRef } from "react";
+
 interface GameBoardProps {
   board: any;
   gameData: any;
@@ -12,179 +14,329 @@ interface GameBoardProps {
 export function GameBoard({
   board, gameData, user, localMovingPiece, myPlayerIndex, getPlayerIndex, onPieceClick
 }: GameBoardProps) {
+  
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const clickAreasRef = useRef<Array<{ id: number; x: number; y: number; r: number }>>([]);
+  
+  const stateRef = useRef({ board, gameData, user, localMovingPiece, myPlayerIndex });
+  
+  useEffect(() => {
+    stateRef.current = { board, gameData, user, localMovingPiece, myPlayerIndex };
+  }, [board, gameData, user, localMovingPiece, myPlayerIndex]);
 
   const isMyTurn = gameData?.currentTurn === user?.uid;
 
-  // 📐 TISZTA 15x15-ÖS RÁCSRENDSZER
-  const cellSize = "calc(100% / 15)";
+  // 📐 A Canvas belső, fix logikai felbontása
+  const BASE_RESOLUTION = 600;
+  const gridCount = 15;
+  const cellSize = BASE_RESOLUTION / gridCount; // 40px cellánként
 
-  // A classicBoard.ts koordinátáit (OFFSET = 20, STEP = 50) tiszta rácsindexekké (0-14) alakítjuk
-  const scaleCoord = (val: number) => `calc(((${val} - 20) / 50) * ${cellSize})`;
+  const getGridIndex = (val: number) => Math.round((val - 20) / 50);
 
-  // Bábuk méretarányai
-  const pieceWidth = `calc(${cellSize} * 0.7)`;
-  const pieceHeight = `calc(${cellSize} * 0.9)`;
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-  // A Ludo King nagy bázisai pontosan 6x6-os mezőnyi területet foglalnak el
-  const baseSize = `calc(${cellSize} * 6)`;
+    let animationFrameId: number;
+    let hopFrame = 0; 
+
+    const renderLoop = () => {
+      hopFrame += 0.2; 
+
+      const current = stateRef.current;
+      const currentBoard = current.board;
+      const currentGameData = current.gameData;
+      const currentUser = current.user;
+      const currentLocalMovingPiece = current.localMovingPiece;
+
+      // 🔥 TRÜKK: Nem fillRect-el színezzük fehérre az alap háttért, hanem CLEAR-eljük!
+      // Ezáltal a teljes vászon láthatatlan/átlátszó lesz, ahol nem rajzolunk rá külön mezőt.
+      ctx.clearRect(0, 0, BASE_RESOLUTION, BASE_RESOLUTION);
+
+      // --- 1. NAGY BÁZISOK RAJZOLÁSA ---
+      const basePxSize = cellSize * 6;
+
+      // 🟦 Kék bázis (Bal felül)
+      ctx.fillStyle = "#1e88e5";
+      ctx.fillRect(0, 0, basePxSize, basePxSize);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.2)"; // Finomabb fehér szegély a sötét háttérhez
+      ctx.lineWidth = 1;
+      ctx.strokeRect(0, 0, basePxSize, basePxSize);
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.roundRect(basePxSize * 0.15, basePxSize * 0.15, basePxSize * 0.70, basePxSize * 0.70, 12);
+      ctx.fill();
+
+      // 🟥 Piros bázis (Jobb alul)
+      const redBaseX = cellSize * 9;
+      const redBaseY = cellSize * 9;
+      ctx.fillStyle = "#e53935";
+      ctx.fillRect(redBaseX, redBaseY, basePxSize, basePxSize);
+      ctx.strokeRect(redBaseX, redBaseY, basePxSize, basePxSize);
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.roundRect(redBaseX + basePxSize * 0.15, redBaseY + basePxSize * 0.15, basePxSize * 0.70, basePxSize * 0.70, 12);
+      ctx.fill();
+
+      // --- 2. BÁZISPONTOK (Fehér fészkek) ---
+      const drawBaseNest = (pos: any, color: string) => {
+        const gx = getGridIndex(pos.x);
+        const gy = getGridIndex(pos.y);
+        const cx = gx * cellSize + cellSize / 2;
+        const cy = gy * cellSize + cellSize / 2;
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(cx, cy, cellSize * 0.38, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      };
+      currentBoard?.p1Base?.forEach((pos: any) => drawBaseNest(pos, "#1e88e5"));
+      currentBoard?.p2Base?.forEach((pos: any) => drawBaseNest(pos, "#e53935"));
+
+      // --- 3. HOME SÁVOK (A tiszta színes folyosók) ---
+      const drawHomeTile = (pos: any, idx: number, mainColor: string) => {
+        const gx = getGridIndex(pos.x);
+        const gy = getGridIndex(pos.y);
+        const tx = gx * cellSize;
+        const ty = gy * cellSize;
+
+        if (idx === 5) return; 
+
+        ctx.fillStyle = mainColor;
+        ctx.fillRect(tx, ty, cellSize, cellSize);
+        
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(tx, ty, cellSize, cellSize);
+      };
+      currentBoard?.p1Home?.forEach((pos: any, idx: number) => drawHomeTile(pos, idx, "#1e88e5"));
+      currentBoard?.p2Home?.forEach((pos: any, idx: number) => drawHomeTile(pos, idx, "#e53935"));
+
+      // --- 4. ÚTVONAL MEZŐK (Maradnak fehérek, így tökéletesen látszódnak!) ---
+      currentBoard?.positions?.forEach((pos: any, index: number) => {
+        const gx = getGridIndex(pos.x);
+        const gy = getGridIndex(pos.y);
+        const tx = gx * cellSize;
+        const ty = gy * cellSize;
+        
+        const isP1Start = index === 0;
+        const isP2Start = index === 26;
+        const isNeutralSafe = [3, 8, 16, 21, 29, 34, 42, 47].includes(index);
+
+        let bg = "#ffffff"; 
+        let border = "rgba(0, 0, 0, 0.15)"; // Sötét háttér mellett a finom fekete szegély mutat a legjobban
+
+        if (isP1Start) { bg = "#29b6f6"; border = "#1e88e5"; } // Kicsit élénkebb kék a sötét témához
+        else if (isP2Start) { bg = "#ef5350"; border = "#e53935"; } // Kicsit élénkebb piros
+        else if (isNeutralSafe) { bg = "#fff59d"; border = "#fbc02d"; }
+
+        ctx.fillStyle = bg;
+        ctx.fillRect(tx, ty, cellSize, cellSize);
+        ctx.strokeStyle = border;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(tx, ty, cellSize, cellSize);
+
+        if (isNeutralSafe) {
+          ctx.font = "14px Arial";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillStyle = "#f57f17";
+          ctx.fillText("⭐", tx + cellSize / 2, ty + cellSize / 2);
+        }
+      });
+
+      // --- 5. KÉTSZEMÉLYES KÖZÉPSŐ HÁROMSZÖGEK ---
+      const midStart = cellSize * 6;
+      const midEnd = cellSize * 9;
+      const centerPt = BASE_RESOLUTION / 2;
+
+      // 🟦 KÉK KÖZÉPSŐ HÁROMSZÖG (Fentről lefelé)
+      ctx.fillStyle = "#1e88e5";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(midStart, midStart);
+      ctx.lineTo(centerPt, centerPt);
+      ctx.lineTo(midEnd, midStart);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // 🟥 PIROS KÖZÉPSŐ HÁROMSZÖG (Lentről felfelé)
+      ctx.fillStyle = "#e53935";
+      ctx.beginPath();
+      ctx.moveTo(midStart, midEnd);
+      ctx.lineTo(centerPt, centerPt);
+      ctx.lineTo(midEnd, midEnd);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Koronák
+      ctx.font = "18px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("👑", centerPt, midStart + cellSize * 0.5); 
+      ctx.fillText("👑", centerPt, midEnd - cellSize * 0.5);  
+
+      // --- 6. BÁBÚK ÉS INTERAKTÍV KATTINTÁSI ZÓNÁK ---
+      const clickableTargets: Array<{ id: number; x: number; y: number; r: number }> = [];
+
+      if (currentGameData?.pieces) {
+        Object.entries(currentGameData.pieces).forEach(([playerId, pieces]: any) => {
+          const pIndex = getPlayerIndex(playerId);
+          const isP1 = pIndex === 0;
+          const isCurrentPlayer = playerId === currentUser?.uid;
+
+          const colorBright = isP1 ? "#42a5f5" : "#ef5350";
+          const colorDark = isP1 ? "#1565c0" : "#c62828";
+
+          pieces.forEach((p: any) => {
+            let coords = null;
+            let isCurrentlyMoving = false;
+
+            if (isCurrentPlayer && currentLocalMovingPiece && currentLocalMovingPiece.id === p.id) {
+              isCurrentlyMoving = true;
+              if (currentLocalMovingPiece.currentVisualPos === -1) {
+                coords = isP1 ? currentBoard?.p1Base?.[p.id - 1] : currentBoard?.p2Base?.[p.id - 1];
+              } else if (currentLocalMovingPiece.inHome) {
+                coords = isP1 ? currentBoard?.p1Home?.[currentLocalMovingPiece.currentVisualPos] : currentBoard?.p2Home?.[currentLocalMovingPiece.currentVisualPos];
+              } else {
+                coords = currentBoard?.positions?.[isP1 ? currentLocalMovingPiece.currentVisualPos : (currentLocalMovingPiece.currentVisualPos + 26) % 52];
+              }
+            } else {
+              if (p.pos === -1) { 
+                coords = isP1 ? currentBoard?.p1Base?.[p.id - 1] : currentBoard?.p2Base?.[p.id - 1]; 
+              } else if (p.inHome) { 
+                coords = isP1 ? currentBoard?.p1Home?.[p.pos] : currentBoard?.p2Home?.[p.pos]; 
+              } else { 
+                coords = currentBoard?.positions?.[isP1 ? p.pos : (p.pos + 26) % 52]; 
+              }
+            }
+
+            if (!coords) return;
+
+            const gx = getGridIndex(coords.x);
+            const gy = getGridIndex(coords.y);
+            
+            let cx = gx * cellSize + cellSize / 2;
+            let cy = gy * cellSize + cellSize / 2;
+
+            if (p.inHome && p.pos === 5) {
+              cx = centerPt;
+              cy = isP1 ? midStart + cellSize * 0.5 : midEnd - cellSize * 0.5;
+            }
+
+            if (isCurrentlyMoving) {
+              const hopYOffset = Math.abs(Math.sin(hopFrame)) * (cellSize * 0.45);
+              cy -= hopYOffset;
+            }
+
+            const isAtGoal = p.inHome && p.pos === 5;
+            const canClickOnBoard = isCurrentPlayer && isMyTurn && currentGameData.hasRolled && !isAtGoal && currentGameData.status === "playing" && !currentLocalMovingPiece;
+
+            if (canClickOnBoard) {
+              clickableTargets.push({ id: p.id, x: cx, y: cy, r: cellSize * 0.55 });
+            }
+
+            ctx.save();
+            if (isAtGoal) ctx.globalAlpha = 0.5;
+
+            ctx.shadowColor = "rgba(0, 0, 0, 0.6)"; // Sötétebb, kontrasztosabb árnyék
+            ctx.shadowBlur = canClickOnBoard ? 12 : 6;
+            ctx.shadowOffsetY = canClickOnBoard ? 7 : 3;
+
+            // 1. 3D Szoknya / Test
+            const bodyGradient = ctx.createRadialGradient(cx - 3, cy + cellSize * 0.1, 2, cx, cy + cellSize * 0.15, cellSize * 0.35);
+            bodyGradient.addColorStop(0, colorBright);
+            bodyGradient.addColorStop(1, colorDark);
+            
+            ctx.fillStyle = bodyGradient;
+            ctx.beginPath();
+            ctx.ellipse(cx, cy + cellSize * 0.15, cellSize * 0.36, cellSize * 0.24, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = canClickOnBoard ? "#ffffff" : "rgba(255,255,255,0.7)";
+            ctx.lineWidth = canClickOnBoard ? 2 : 1;
+            ctx.stroke();
+
+            // 2. 3D Fej
+            const headGradient = ctx.createRadialGradient(cx - 3, cy - cellSize * 0.2, 1, cx, cy - cellSize * 0.18, cellSize * 0.22);
+            headGradient.addColorStop(0, colorBright);
+            headGradient.addColorStop(1, colorDark);
+
+            ctx.fillStyle = headGradient;
+            ctx.beginPath();
+            ctx.arc(cx, cy - cellSize * 0.18, cellSize * 0.21, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.restore();
+          });
+        });
+      }
+
+      clickAreasRef.current = clickableTargets;
+      animationFrameId = requestAnimationFrame(renderLoop);
+    };
+
+    animationFrameId = requestAnimationFrame(renderLoop);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [cellSize, isMyTurn]);
+
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.clientX - rect.left;
+    const clientY = e.clientY - rect.top;
+
+    const canvasX = (clientX / rect.width) * BASE_RESOLUTION;
+    const canvasY = (clientY / rect.height) * BASE_RESOLUTION;
+
+    const hitTarget = clickAreasRef.current.find(target => {
+      const distance = Math.sqrt((canvasX - target.x) ** 2 + (canvasY - target.y) ** 2);
+      return distance <= target.r;
+    });
+
+    if (hitTarget) {
+      onPieceClick(hitTarget.id);
+    }
+  };
 
   return (
-    <div style={{
-      position: "relative",
-      width: "100%",
-      paddingTop: "100%",  // Biztosítja az 1:1 arányú tökéletes négyzetet
-      border: "4px solid #333",
-      borderRadius: "16px",
-      background: "#fafafa",
+    <div style={{ 
+      position: "relative", 
+      width: "100%",       
+      paddingTop: "100%",  
+      border: "5px solid #2d3748", 
+      borderRadius: "20px", 
+      // 🔥 FIX: Kivettem a teli fehér hátteret a divből, így átlátszó lesz, ahol a Canvas nem rajzol semmit!
+      background: "transparent", 
       userSelect: "none",
-      boxShadow: "0 8px 30px rgba(0,0,0,0.25)",
-      boxSizing: "border-box"
+      boxShadow: "0 12px 35px rgba(0,0,0,0.5)",
+      boxSizing: "border-box",
+      overflow: "hidden"
     }}>
-      {/* Abszolút pozicionált belső konténer az elemeknek */}
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
-
-        {/* 🟦 LUDO KING KÉK BÁZIS BLOCK (Bal felül: 0,0 indexről indul, 6 mező széles/magas) */}
-        <div style={{
+      <canvas
+        ref={canvasRef}
+        width={BASE_RESOLUTION}
+        height={BASE_RESOLUTION}
+        onClick={handleCanvasClick}
+        style={{
           position: "absolute",
-          left: 0,
           top: 0,
-          width: baseSize,
-          height: baseSize,
-          background: "#1e88e5",
-          borderRight: "1px solid #333",
-          borderBottom: "1px solid #333",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          boxSizing: "border-box",
-          zIndex: 0
-        }}>
-          {/* Belső fehér tálca a bábuknak */}
-          <div style={{ width: "66%", height: "66%", background: "#ffffff", borderRadius: "8px", boxShadow: "inset 0 2px 5px rgba(0,0,0,0.15)" }} />
-        </div>
-
-        {/* 🟥 LUDO KING PIROS BÁZIS BLOCK (Jobb alul: 9,9 indexről indul, mert 15-6=9, 6 mező széles/magas) */}
-        <div style={{
-          position: "absolute",
-          left: `calc(${cellSize} * 9)`,
-          top: `calc(${cellSize} * 9)`,
-          width: baseSize,
-          height: baseSize,
-          background: "#e53935",
-          borderLeft: "1px solid #333",
-          borderTop: "1px solid #333",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          boxSizing: "border-box",
-          zIndex: 0
-        }}>
-          {/* Belső fehér tálca a bábuknak */}
-          <div style={{ width: "66%", height: "66%", background: "#ffffff", borderRadius: "8px", boxShadow: "inset 0 2px 5px rgba(0,0,0,0.15)" }} />
-        </div>
-
-        {/* BÁZISPONTOK (A bábuk egyedi fészkei a fehér négyzet belsejében széthúzva) */}
-        {board?.p1Base?.map((pos: any, idx: number) => (
-          <div key={`p1b-${idx}`} style={{ position: "absolute", left: scaleCoord(pos.x), top: scaleCoord(pos.y), width: cellSize, height: cellSize, background: "#ffffff", border: "2px solid #1e88e5", borderRadius: "50%", boxSizing: "border-box", boxShadow: "inset 0 1px 3px rgba(0,0,0,0.2)", zIndex: 1 }} />
-        ))}
-        {board?.p2Base?.map((pos: any, idx: number) => (
-          <div key={`p2b-${idx}`} style={{ position: "absolute", left: scaleCoord(pos.x), top: scaleCoord(pos.y), width: cellSize, height: cellSize, background: "#ffffff", border: "2px solid #e53935", borderRadius: "50%", boxSizing: "border-box", boxShadow: "inset 0 1px 3px rgba(0,0,0,0.2)", zIndex: 1 }} />
-        ))}
-
-        {/* BEFUTÓK (Home sávok) - HAJSZÁLPONTOSAN UGYANOLYAN 1PX-ES SZEGÉLLYEL */}
-        {board?.p1Home?.map((pos: any, idx: number) => (
-          <div key={`p1h-${idx}`} style={{ position: "absolute", left: scaleCoord(pos.x), top: scaleCoord(pos.y), width: cellSize, height: cellSize, background: idx === 5 ? "#0d47a1" : "#e3f2fd", border: "1px solid #1e88e5", boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", color: "#1e88e5", fontWeight: "bold", zIndex: 1 }}>
-            {idx === 5 ? "👑" : `H${idx}`}
-          </div>
-        ))}
-        {board?.p2Home?.map((pos: any, idx: number) => (
-          <div key={`p2h-${idx}`} style={{ position: "absolute", left: scaleCoord(pos.x), top: scaleCoord(pos.y), width: cellSize, height: cellSize, background: idx === 5 ? "#b71c1c" : "#ffebee", border: "1px solid #e53935", boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", color: "#e53935", fontWeight: "bold", zIndex: 1 }}>
-            {idx === 5 ? "👑" : `H${idx}`}
-          </div>
-        ))}
-
-        {/* ÚTVONAL MEZŐK - MINDEN MEZŐ FIXEN 1PX-ES SZEGÉLLYEL RENDELKEZIK (Nincs méretbeli torzulás!) */}
-        {board?.positions?.map((pos: any, index: number) => {
-          const isP1Start = index === 0; const isP2Start = index === 26;
-          const isNeutralSafe = [3, 8, 16, 21, 29, 34, 42, 47].includes(index);
-          const displayIndex = myPlayerIndex === 0 ? index : (index + 26) % 52;
-
-          let bg = "#fff"; let border = "1px solid #ccc"; let txt = "#999";
-          if (isP1Start) { bg = "#90caf9"; border = "1px solid #1e88e5"; txt = "#0d47a1"; }
-          else if (isP2Start) { bg = "#ef9a9a"; border = "1px solid #e53935"; txt = "#b71c1c"; }
-          else if (isNeutralSafe) { bg = "#fff9c4"; border = "1px solid #fbc02d"; txt = "#f57f17"; }
-
-          return (
-            <div key={index} style={{ position: "absolute", left: scaleCoord(pos.x), top: scaleCoord(pos.y), width: cellSize, height: cellSize, background: bg, border: border, boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", color: txt, fontWeight: "bold", zIndex: 1 }}>
-              {displayIndex}
-            </div>
-          );
-        })}
-
-        {/* BÁBÚK RENDERELÉSE */}
-        {gameData?.pieces &&
-          Object.entries(gameData.pieces).map(([playerId, pieces]: any) => {
-            const pIndex = getPlayerIndex(playerId);
-            const isP1 = pIndex === 0;
-            const color = isP1 ? "#1e88e5" : "#e53935";
-            const isCurrentPlayer = playerId === user?.uid;
-
-            return pieces.map((p: any) => {
-              let coords = null;
-              let isHopping = false;
-
-              if (isCurrentPlayer && localMovingPiece && localMovingPiece.id === p.id) {
-                isHopping = true;
-                if (localMovingPiece.currentVisualPos === -1) {
-                  coords = isP1 ? board?.p1Base?.[p.id - 1] : board?.p2Base?.[p.id - 1];
-                } else if (localMovingPiece.inHome) {
-                  coords = isP1 ? board?.p1Home?.[localMovingPiece.currentVisualPos] : board?.p2Home?.[localMovingPiece.currentVisualPos];
-                } else {
-                  coords = board?.positions?.[isP1 ? localMovingPiece.currentVisualPos : (localMovingPiece.currentVisualPos + 26) % 52];
-                }
-              } else {
-                if (p.pos === -1) { coords = isP1 ? board?.p1Base?.[p.id - 1] : board?.p2Base?.[p.id - 1]; }
-                else if (p.inHome) { coords = isP1 ? board?.p1Home?.[p.pos] : board?.p2Home?.[p.pos]; }
-                else { coords = board?.positions?.[isP1 ? p.pos : (p.pos + 26) % 52]; }
-              }
-
-              if (!coords) return null;
-
-              const isAtGoal = p.inHome && p.pos === 5;
-              const canClickOnBoard = isCurrentPlayer && isMyTurn && gameData.hasRolled && !isAtGoal && gameData.status === "playing" && !localMovingPiece;
-
-              const pieceLeft = `calc(${scaleCoord(coords.x)} + (${cellSize} - ${pieceWidth}) / 2)`;
-              const pieceTop = `calc(${scaleCoord(coords.y)} + (${cellSize} - ${pieceHeight}) / 2)`;
-
-              return (
-                <div
-                  key={`${playerId}-${p.id}`}
-                  onClick={() => canClickOnBoard && onPieceClick(p.id)}
-                  className={isHopping ? "hopping-piece" : ""}
-                  style={{
-                    position: "absolute",
-                    left: pieceLeft,
-                    top: pieceTop,
-                    width: pieceWidth,
-                    height: pieceHeight,
-                    zIndex: 100 + p.id + (canClickOnBoard ? 20 : 0) + (isAtGoal ? -5 : 0),
-                    transition: isHopping ? "none" : "all 0.2s linear",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    cursor: canClickOnBoard ? "pointer" : "default",
-                    filter: canClickOnBoard ? "drop-shadow(0px 4px 6px rgba(0,0,0,0.4))" : isAtGoal ? "grayscale(30%) opacity(0.8)" : "none",
-                    transform: canClickOnBoard ? "scale(1.15) translateY(-4px)" : "scale(1)",
-                  }}
-                >
-                  <div style={{ width: "60%", height: "45%", borderRadius: "50%", background: color, boxShadow: isAtGoal ? "none" : "inset -2px -2px 3px rgba(0,0,0,0.4), 0 2px 2px rgba(0,0,0,0.3)", border: canClickOnBoard ? "1.5px solid #fff" : "none" }} />
-                  <div style={{ width: "95%", height: "55%", backgroundColor: color, borderRadius: "50% 50% 2px 2px", marginTop: "-10%", boxShadow: isAtGoal ? "none" : "inset -2px -2px 3px rgba(0,0,0,0.4), 0 2px 3px rgba(0,0,0,0.4)", borderBottom: isAtGoal ? "none" : "1.5px solid #fff" }} />
-                </div>
-              );
-            });
-          })
-        }
-      </div>
+          left: 0,
+          width: "100%",
+          height: "100%",
+          display: "block"
+        }}
+      />
     </div>
   );
 }
