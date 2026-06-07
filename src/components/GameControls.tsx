@@ -1,4 +1,6 @@
 // src/components/GameControls.tsx
+import { useState } from "react";
+
 interface GameControlsProps {
   gameData: any;
   user: any;
@@ -19,75 +21,144 @@ export function GameControls({
   gameData, user, isMyTurn, canRoll, isDiceRolling, cheatDiceValue, setCheatDiceValue,
   statusMessage, onRollDice, onMovePiece, onTeleportPiece, onSendChat, getPlayerDisplayTitle
 }: GameControlsProps) {
+  // Lokális állapot a teszt/cheat üzemmód panel lenyitásához
+  const [showCheatPanel, setShowCheatPanel] = useState<boolean>(false);
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%" }}>
       
-      {/* KOCKA VEZÉRLŐ */}
-      <div style={{ display: "flex", gap: "10px", flexDirection: "column", background: "#e8f5e9", padding: "12px", borderRadius: "8px" }}>
-        <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
-          <button onClick={onRollDice} disabled={!canRoll} style={{ padding: "12px 20px", fontSize: "16px", fontWeight: "bold", flexGrow: 1, cursor: canRoll ? "pointer" : "not-allowed" }}>
-            Dobás
-          </button>
-          <div style={{ fontSize: "18px", fontWeight: "bold", minWidth: "110px" }}>
-            Kocka: <span className={isDiceRolling ? "rolling-dice" : ""} style={{ color: "#4caf50", fontSize: "28px", display: "inline-block" }}>
+      {/* KOCKA VEZÉRLŐ ÉS INFORMÁCIÓS CSÍK EGYBEGYÚRVA */}
+      <div style={{ 
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "space-between", 
+        background: isMyTurn ? "#e3f2fd" : "#f5f5f5", 
+        border: isMyTurn ? "2px solid #1e88e5" : "1px solid #ddd",
+        padding: "8px 12px", 
+        borderRadius: "10px" 
+      }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "2px", flexGrow: 1 }}>
+          <div style={{ fontWeight: "bold", fontSize: "13px", color: isMyTurn ? "#1e88e5" : "#e53935" }}>
+            {gameData.status === "waiting" ? "Várakozás a csatlakozóra..." : isMyTurn ? (gameData.hasRolled ? "➡️ Lépj a gombokkal!" : "🟢 TE JÖSSZ!") : `⏳ Várakozás: ${getPlayerDisplayTitle(gameData.currentTurn)}`}
+          </div>
+          {statusMessage && <div style={{ color: "#2e7d32", fontSize: "11px", fontWeight: "bold" }}>{statusMessage}</div>}
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ fontSize: "13px", fontWeight: "bold", color: "#333" }}>
+            Kocka: <span className={isDiceRolling ? "rolling-dice" : ""} style={{ color: "#4caf50", fontSize: "20px", fontWeight: "900", display: "inline-block", verticalAlign: "middle" }}>
               {isDiceRolling ? "🌀" : (gameData?.diceValue || "-")}
             </span>
           </div>
+          <button onClick={onRollDice} disabled={!canRoll} style={{ padding: "6px 14px", fontSize: "13px", borderRadius: "6px", border: "none", background: canRoll ? "#4caf50" : "#ccc", color: "#fff", fontWeight: "bold", cursor: canRoll ? "pointer" : "not-allowed" }}>
+            Dobás
+          </button>
         </div>
-        
-        {/* Cheat kockaválasztó */}
-        {gameData.isTestModeActive && isMyTurn && !gameData.hasRolled && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fff", padding: "6px", borderRadius: "6px", border: "1px solid #c8e6c9" }}>
-            <span style={{ fontSize: "12px", fontWeight: "bold", color: "#2e7d32" }}>🔮 Következő dobás:</span>
-            <select value={cheatDiceValue} onChange={(e) => setCheatDiceValue(Number(e.target.value))} style={{ padding: "4px", fontWeight: "bold" }}>
-              <option value={0}>Véletlen</option>
-              {[1,2,3,4,5,6].map(n => <option key={n} value={n}>Fix {n}</option>)}
-            </select>
-          </div>
-        )}
       </div>
 
-      {/* INFORMÁCIÓS CSÍK */}
-      <div style={{ minHeight: "45px", padding: "8px", borderRadius: "6px", background: isMyTurn ? "#e3f2fd" : "#fff5f5", border: isMyTurn ? "1px solid #90caf9" : "1px solid #ffcdd2" }}>
-        <div style={{ fontWeight: "bold", fontSize: "14px", color: isMyTurn ? "#1e88e5" : "#e53935" }}>
-          {gameData.status === "waiting" ? "Szoba megnyitva, várj a csatlakozóra..." : isMyTurn ? (gameData.hasRolled ? "➡️ Lépj a táblán vagy a gombokkal!" : "🟢 TE JÖSSZ!") : `⏳ Várakozás: ${getPlayerDisplayTitle(gameData.currentTurn)}`}
-        </div>
-        {statusMessage && <div style={{ color: "#2e7d32", fontSize: "13px", marginTop: "4px", fontWeight: "bold" }}>{statusMessage}</div>}
-      </div>
-
-      {/* BÁBÚK LISTÁJA */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+      {/* BÁBÚK SELEKTORA (VÍZSZINTES MOBILBARÁT KIJELZÉS) */}
+      <div style={{ display: "flex", justifyContent: "space-between", gap: "4px", margin: "2px 0" }}>
         {gameData?.pieces?.[user?.uid ?? ""]?.map((p: any) => {
           const isAtGoal = p.inHome && p.pos === 5;
           const canMovePiece = isMyTurn && gameData.hasRolled && !isAtGoal && (p.pos === -1 ? gameData.diceValue === 6 : (!p.inHome || p.pos + gameData.diceValue <= 5));
-          const currentSelectValue = p.pos === -1 ? "-1" : p.inHome ? `H${p.pos}` : `${p.pos}`;
 
           return (
-            <div key={p.id} style={{ display: "flex", gap: "8px", alignItems: "center", background: "#fdfdfd", padding: "6px 10px", borderRadius: "8px", border: "1px solid #eee" }}>
-              <button onClick={() => onMovePiece(p.id)} disabled={!canMovePiece} style={{ flex: 2, padding: "10px 4px", fontSize: "13px", fontWeight: canMovePiece ? "bold" : "normal", background: isAtGoal ? "#fff9c4" : canMovePiece ? "#c8e6c9" : "#fff", border: canMovePiece ? "2px solid #2e7d32" : "1px solid #ccc", borderRadius: "6px", cursor: canMovePiece ? "pointer" : "not-allowed" }}>
-                {p.id}. Bábu ({isAtGoal ? "🏆 CÉL" : p.pos === -1 ? "Bent" : p.inHome ? `Befutó ${p.pos}` : `${p.pos}. mező`})
-              </button>
-              
-              {/* Teleport csalás */}
-              {gameData.isTestModeActive && (
-                <select value={currentSelectValue} onChange={(e) => onTeleportPiece(p.id, e.target.value)} style={{ padding: "6px", fontSize: "11px", borderRadius: "4px", background: "#fffde7", border: "1px solid #fbc02d" }}>
-                  <option value="-1">🏠 Bázis</option>
-                  {Array.from({ length: 52 }).map((_, i) => <option key={i} value={`${i}`}>{i}. mező</option>)}
-                  {["0","1","2","3","4"].map(n => <option key={n} value={`H${n}`}>H{n}</option>)}
-                  <option value="H5">👑 CÉL</option>
-                </select>
-              )}
-            </div>
+            <button 
+              key={p.id}
+              onClick={() => onMovePiece(p.id)} 
+              disabled={!canMovePiece} 
+              style={{ 
+                flex: 1, 
+                padding: "8px 2px", 
+                fontSize: "11px", 
+                fontWeight: "bold", 
+                background: isAtGoal ? "#fff9c4" : canMovePiece ? "#c8e6c9" : "#fff", 
+                border: canMovePiece ? "2px solid #2e7d32" : "1px solid #ddd", 
+                borderRadius: "8px", 
+                color: "#222222", // Fixált sötét betűszín
+                cursor: canMovePiece ? "pointer" : "not-allowed",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "2px",
+                boxShadow: canMovePiece ? "0 2px 6px rgba(46,125,50,0.2)" : "none"
+              }}
+            >
+              <span style={{ fontSize: "10px", opacity: 0.7 }}>#{p.id} Bábu</span>
+              <span style={{ fontSize: "11px" }}>
+                {isAtGoal ? "🏆" : p.pos === -1 ? "🏠" : p.inHome ? `B${p.pos}` : `${p.pos}`}
+              </span>
+            </button>
           );
         })}
       </div>
 
-      {/* CHAT PANEL */}
-      <div style={{ background: "#f9f9f9", border: "1px solid #ddd", padding: "10px", borderRadius: "10px", marginTop: "5px" }}>
-        <span style={{ fontSize: "11px", fontWeight: "bold", color: "#666", display: "block", marginBottom: "6px" }}>💬 Gyors üzenet küldése:</span>
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-          {["Bocsi! 🙏", "Ez fájhatott! 💥", "Szeretlek! ❤️", "Szerencsés vagy!🍀", "😂", "😎", "🔥"].map(msg => (
-            <button key={msg} onClick={() => onSendChat(msg)} style={{ padding: "6px 10px", fontSize: "12px", background: "#fff", border: "1px solid #ccc", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>{msg}</button>
+      {/* CHEAT PANEL ELREJTVE (Csak ha aktív a teszt mód) */}
+      {gameData.isTestModeActive && (
+        <div style={{ background: "#fffde7", border: "1px solid #fbc02d", borderRadius: "8px", padding: "4px 8px" }}>
+          <button 
+            onClick={() => setShowCheatPanel(!showCheatPanel)} 
+            style={{ width: "100%", background: "none", border: "none", color: "#f57f17", fontWeight: "bold", fontSize: "11px", cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between" }}
+          >
+            <span>{showCheatPanel ? "▲ Csalások és Teleport elrejtése" : "▼ Csalások és Teleport megnyitása"}</span>
+          </button>
+          
+          {showCheatPanel && (
+            <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "6px", paddingBottom: "4px" }}>
+              {/* Cheat kockaválasztó */}
+              {isMyTurn && !gameData.hasRolled && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fff", padding: "4px", borderRadius: "4px", border: "1px solid #ffe082" }}>
+                  <span style={{ fontSize: "11px", fontWeight: "bold", color: "#b78103" }}>🔮 Következő dobás:</span>
+                  <select value={cheatDiceValue} onChange={(e) => setCheatDiceValue(Number(e.target.value))} style={{ padding: "2px", fontSize: "11px", fontWeight: "bold" }}>
+                    <option value={0}>Véletlen</option>
+                    {[1,2,3,4,5,6].map(n => <option key={n} value={n}>Fix {n}</option>)}
+                  </select>
+                </div>
+              )}
+              {/* Teleport gombok a bábukhoz */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "4px" }}>
+                {gameData?.pieces?.[user?.uid ?? ""]?.map((p: any) => {
+                  const currentSelectValue = p.pos === -1 ? "-1" : p.inHome ? `H${p.pos}` : `${p.pos}`;
+                  return (
+                    <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fff", padding: "2px 4px", borderRadius: "4px", border: "1px solid #ffe082" }}>
+                      <span style={{ fontSize: "10px" }}>#{p.id}:</span>
+                      <select value={currentSelectValue} onChange={(e) => onTeleportPiece(p.id, e.target.value)} style={{ padding: "2px", fontSize: "10px", background: "#fff" }}>
+                        <option value="-1">Bázis</option>
+                        {Array.from({ length: 52 }).map((_, i) => <option key={i} value={`${i}`}>{i}. m</option>)}
+                        {["0","1","2","3","4"].map(n => <option key={n} value={`H${n}`}>H{n}</option>)}
+                        <option value="H5">👑 CÉL</option>
+                      </select>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* CHAT PANEL - FIXÁLT BETŰSZÍNNEL */}
+      <div style={{ background: "#f9f9f9", border: "1px solid #ddd", padding: "8px", borderRadius: "10px" }}>
+        <span style={{ fontSize: "11px", fontWeight: "bold", color: "#555", display: "block", marginBottom: "4px" }}>💬 Gyors üzenet küldése:</span>
+        <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+          {["Bocsi! 🙏", "Ez fájhatott! 💥", "Szeretlek! ❤️", "Szerencse! 🍀", "😂", "😎", "🔥"].map(msg => (
+            <button 
+              key={msg} 
+              onClick={() => onSendChat(msg)} 
+              style={{ 
+                padding: "5px 8px", 
+                fontSize: "12px", 
+                background: "#ffffff", 
+                color: "#222222", // Kényszerített sötét betűszín, így nem lesz láthatatlan
+                border: "1px solid #ccc", 
+                borderRadius: "6px", 
+                cursor: "pointer", 
+                fontWeight: "bold",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+              }}
+            >
+              {msg}
+            </button>
           ))}
         </div>
       </div>

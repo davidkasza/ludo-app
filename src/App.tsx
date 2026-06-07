@@ -1,5 +1,5 @@
 // src/App.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLudoGame } from "./hooks/useLudoGame";
 import { Lobby } from "./components/Lobby";
 import { GameBoard } from "./components/GameBoard";
@@ -11,9 +11,23 @@ export default function App() {
   const [selectedBoard, setSelectedBoard] = useState<string>("classic");
   const [isTestMode, setIsTestMode] = useState<boolean>(false);
   const [cheatDiceValue, setCheatDiceValue] = useState<number>(0);
+  
+  // Lokális állapot a chat buborék garantált eltüntetéséhez
+  const [showToast, setShowToast] = useState<boolean>(false);
 
   // Az összes játéklogika és Firebase szinkronizáció egy helyen
   const game = useLudoGame(selectedBoard, isTestMode, cheatDiceValue);
+
+  // Figyeljük, ha új chat üzenet érkezik, és elindítunk egy garantált kliensoldali időzítőt
+  useEffect(() => {
+    if (game.gameData?.activeChat?.message) {
+      setShowToast(true);
+      const timer = setTimeout(() => {
+        setShowToast(false);
+      }, 3500); // 3.5 másodperc után eltűnik
+      return () => clearTimeout(timer);
+    }
+  }, [game.gameData?.activeChat?.message, game.gameData?.activeChat?.timestamp]);
 
   // 1️⃣ KÉPERNYŐ: GYŐZELMI INFÓK
   if (game.gameData?.status === "finished") {
@@ -32,7 +46,15 @@ export default function App() {
   // 2️⃣ KÉPERNYŐ: GAMEPLAY SCREEN
   if (game.gameData) {
     return (
-      <div style={{ padding: "15px", fontFamily: "Arial, sans-serif", color: "#333", maxWidth: "450px", margin: "0 auto" }}>
+      <div style={{ 
+        padding: "10px 8px", 
+        fontFamily: "Arial, sans-serif", 
+        color: "#333", 
+        maxWidth: "100vw", 
+        margin: "0 auto",
+        overflowX: "hidden", // Megakadályozza az oldalra görgetést
+        boxSizing: "border-box"
+      }}>
         
         {/* CSS Keyframes az animációkhoz */}
         <style>{`
@@ -42,33 +64,49 @@ export default function App() {
           .hopping-piece { animation: hop 0.25s ease-in-out infinite; }
         `}</style>
 
-        {/* Lebegő nemzetközi chat buborék */}
-        {game.gameData.activeChat?.message && (Date.now() - game.gameData.activeChat.timestamp < 4000) && (
-          <div style={{ position: "fixed", top: "15%", left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.85)", color: "#fff", padding: "10px 20px", borderRadius: "20px", zIndex: 999, fontWeight: "bold" }}>
+        {/* Lebegő nemzetközi chat buborék - Fixált kliensoldali időzítéssel */}
+        {showToast && game.gameData.activeChat?.message && (
+          <div style={{ 
+            position: "fixed", 
+            top: "12%", 
+            left: "50%", 
+            transform: "translateX(-50%)", 
+            background: "rgba(0,0,0,0.9)", 
+            color: "#fff", 
+            padding: "12px 24px", 
+            borderRadius: "25px", 
+            zIndex: 9999, 
+            fontWeight: "bold",
+            boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
+            textAlign: "center",
+            width: "80%",
+            maxWidth: "350px",
+            fontSize: "14px"
+          }}>
             💬 {game.getPlayerDisplayTitle(game.gameData.activeChat.sender)}: {game.gameData.activeChat.message}
           </div>
         )}
 
         {/* Felső sáv */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-          <h3 style={{ margin: 0 }}>🎲 Ludo Csata {game.gameData.isTestModeActive && <span style={{color: "#f57f17", fontSize: "12px"}}>(Teszt Mód)</span>}</h3>
-          <button onClick={game.quitToMenu} style={{ background: "none", border: "none", color: "#d32f2f", fontWeight: "bold", cursor: "pointer" }}>Kilépés</button>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+          <h3 style={{ margin: 0, fontSize: "16px" }}>🎲 Ludo Csata {game.gameData.isTestModeActive && <span style={{color: "#f57f17", fontSize: "11px"}}>(Teszt Mód)</span>}</h3>
+          <button onClick={game.quitToMenu} style={{ background: "none", border: "none", color: "#d32f2f", fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}>Kilépés</button>
         </div>
 
-        <div style={{ background: "#f5f5f5", padding: "10px", borderRadius: "8px", fontSize: "13px", marginBottom: "15px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ background: "#f5f5f5", padding: "8px 10px", borderRadius: "8px", fontSize: "12px", marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>Színed: <span style={{ color: game.myPlayerIndex === 0 ? "#1e88e5" : "#e53935", fontWeight: "bold" }}>{game.getPlayerDisplayTitle(game.user?.uid ?? "")}</span></div>
-          <div style={{ fontSize: "11px", background: "#fff", padding: "4px 8px", borderRadius: "4px" }}>Kód: <code>{game.gameId}</code></div>
+          <div style={{ fontSize: "10px", background: "#fff", padding: "3px 6px", borderRadius: "4px" }}>Kód: <code>{game.gameId}</code></div>
         </div>
 
         {/* Várakozási fázis */}
         {game.gameData.status === "waiting" && (
-          <div style={{ background: "#fff8e1", border: "1px solid #ffe082", padding: "12px", borderRadius: "8px", textAlign: "center", marginBottom: "15px", fontWeight: "bold", color: "#b78103" }}>
-            ⏳ Várakozás az ellenfél csatlakozására...
+          <div style={{ background: "#fff8e1", border: "1px solid #ffe082", padding: "10px", borderRadius: "8px", textAlign: "center", marginBottom: "10px", fontSize: "13px", fontWeight: "bold", color: "#b78103" }}>
+            ⏳ Várakozás az ellenfélre...
           </div>
         )}
 
-        {/* A JÁTÉKVEZÉRLŐK (Kocka, Gombok, Chat, Csalások) */}
-        <div style={{ marginBottom: "20px" }}>
+        {/* A JÁTÉKVEZÉRLŐK */}
+        <div style={{ marginBottom: "10px" }}>
           <GameControls 
             gameData={game.gameData} user={game.user} isMyTurn={game.isMyTurn} canRoll={game.canRoll} isDiceRolling={game.isDiceRolling}
             cheatDiceValue={cheatDiceValue} setCheatDiceValue={setCheatDiceValue} statusMessage={game.statusMessage}
@@ -77,12 +115,20 @@ export default function App() {
           />
         </div>
 
-        {/* A KIRAJZOLT TÁBLA */}
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <GameBoard
-            board={game.board} gameData={game.gameData} user={game.user} localMovingPiece={game.localMovingPiece}
-            myPlayerIndex={game.myPlayerIndex} getPlayerIndex={game.getPlayerIndex} onPieceClick={game.movePiece}
-          />
+        {/* A KIRAJZOLT TÁBLA - Automatikus mobilra skálázással */}
+        <div style={{ 
+          display: "flex", 
+          justifyContent: "center", 
+          width: "100%",
+          overflow: "hidden",
+          touchAction: "manipulation"
+        }}>
+          <div style={{ width: "100%", maxWidth: "410px" }}>
+            <GameBoard
+              board={game.board} gameData={game.gameData} user={game.user} localMovingPiece={game.localMovingPiece}
+              myPlayerIndex={game.myPlayerIndex} getPlayerIndex={game.getPlayerIndex} onPieceClick={game.movePiece}
+            />
+          </div>
         </div>
       </div>
     );
