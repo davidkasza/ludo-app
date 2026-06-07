@@ -28,7 +28,7 @@ export function GameControls({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%" }}>
       
-      {/* LUDO KING MODELLŰ KOCKA ÉS PROFIL PANEL */}
+      {/* DICE AND PROFILE PANEL */}
       <div style={{ 
         display: "flex", 
         alignItems: "center", 
@@ -56,15 +56,15 @@ export function GameControls({
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
             <div style={{ fontWeight: "900", fontSize: "13px", color: "#222" }}>
-              {gameData.status === "waiting" ? "Várakozás..." : isMyTurn ? "TE KÖRÖD!" : getPlayerDisplayTitle(gameData.currentTurn)}
+              {gameData.status === "waiting" ? "Waiting..." : isMyTurn ? "YOUR TURN!" : getPlayerDisplayTitle(gameData.currentTurn)}
             </div>
             <div style={{ fontSize: "11px", color: "#666", fontWeight: "bold" }}>
-              {isMyTurn ? (gameData.hasRolled ? "Lépj egy bábuddal!" : "Bökj a gombra a dobáshoz!") : "Várakozás az ellenfélre..."}
+              {isMyTurn ? (gameData.hasRolled ? "Move a piece on board!" : "Tap the dice button to roll!") : "Waiting for opponent..."}
             </div>
           </div>
         </div>
 
-        {/* INTERAKTÍV DOBÓKOCKA GOMB - JAVÍTOTT HÁTTÉRSZÍNNEL */}
+        {/* INTERACTIVE DICE BUTTON */}
         <button 
           onClick={onRollDice} 
           disabled={!canRoll}
@@ -73,7 +73,7 @@ export function GameControls({
             alignItems: "center", 
             gap: "10px",
             padding: "8px 14px",
-            background: canRoll ? "linear-gradient(135deg, #ffffff 0%, #f1e7fe 100%)" : "#e0e0e0", // Fixált CSS színkód szóköz nélkül!
+            background: canRoll ? "linear-gradient(135deg, #ffffff 0%, #f1e7fe 100%)" : "#e0e0e0", 
             border: canRoll ? "2px solid #6200ee" : "1.5px solid #bbb",
             borderRadius: "12px",
             cursor: canRoll ? "pointer" : "not-allowed",
@@ -83,7 +83,7 @@ export function GameControls({
           }}
         >
           <span style={{ fontSize: "12px", fontWeight: "bold", color: canRoll ? "#6200ee" : "#666" }}>
-            {canRoll ? "DOBÁS:" : "SZÁM:"}
+            {canRoll ? "ROLL:" : "VALUE:"}
           </span>
           <div className={isDiceRolling ? "rolling-dice" : ""} style={{ fontSize: "24px", minWidth: "28px", textAlign: "center", lineHeight: "1", color: "#222222", fontWeight: "bold" }}>
             {isDiceRolling ? "🌀" : (gameData?.diceValue || "🎲")}
@@ -97,7 +97,7 @@ export function GameControls({
         </div>
       )}
 
-      {/* BÁBÚK SELEKTORA */}
+      {/* TOKENS SELECTOR PANELS */}
       <div style={{ display: "flex", justifyContent: "space-between", gap: "4px", margin: "2px 0" }}>
         {gameData?.pieces?.[user?.uid ?? ""]?.map((p: any) => {
           const isAtGoal = p.inHome && p.pos === 5;
@@ -125,33 +125,33 @@ export function GameControls({
                 boxShadow: canMovePiece ? "0 2px 6px rgba(46,125,50,0.2)" : "none"
               }}
             >
-              <span style={{ fontSize: "10px", opacity: 0.7 }}>#{p.id} Bábu</span>
+              <span style={{ fontSize: "10px", opacity: 0.7 }}>Token #{p.id}</span>
               <span style={{ fontSize: "11px" }}>
-                {isAtGoal ? "🏆" : p.pos === -1 ? "🏠" : p.inHome ? `B${p.pos}` : `${p.pos}`}
+                {isAtGoal ? "🏆" : p.pos === -1 ? "🏠" : p.inHome ? `H${p.pos}` : `${p.pos}`}
               </span>
             </button>
           );
         })}
       </div>
 
-      {/* CHEAT PANEL */}
+      {/* DEV CHEAT PANEL */}
       {gameData.isTestModeActive && (
         <div style={{ background: "#fffde7", border: "1px solid #fbc02d", borderRadius: "8px", padding: "4px 8px" }}>
           <button 
             onClick={() => setShowCheatPanel(!showCheatPanel)} 
             style={{ width: "100%", background: "none", border: "none", color: "#f57f17", fontWeight: "bold", fontSize: "11px", cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between" }}
           >
-            <span>{showCheatPanel ? "▲ Csalások és Teleport elrejtése" : "▼ Csalások és Teleport megnyitása"}</span>
+            <span>{showCheatPanel ? "▲ Hide Sandbox Toolkit" : "▼ Open Sandbox Toolkit"}</span>
           </button>
           
           {showCheatPanel && (
             <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "6px", paddingBottom: "4px" }}>
               {isMyTurn && !gameData.hasRolled && (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fff", padding: "4px", borderRadius: "4px", border: "1px solid #ffe082" }}>
-                  <span style={{ fontSize: "11px", fontWeight: "bold", color: "#b78103" }}>🔮 Következő dobás:</span>
+                  <span style={{ fontSize: "11px", fontWeight: "bold", color: "#b78103" }}>🔮 Set Next Roll Value:</span>
                   <select value={cheatDiceValue} onChange={(e) => setCheatDiceValue(Number(e.target.value))} style={{ padding: "2px", fontSize: "11px", fontWeight: "bold" }}>
-                    <option value={0}>Véletlen</option>
-                    {[1,2,3,4,5,6].map(n => <option key={n} value={n}>Fix {n}</option>)}
+                    <option value={0}>Random</option>
+                    {[1,2,3,4,5,6].map(n => <option key={n} value={n}>Force {n}</option>)}
                   </select>
                 </div>
               )}
@@ -162,10 +162,10 @@ export function GameControls({
                     <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fff", padding: "2px 4px", borderRadius: "4px", border: "1px solid #ffe082" }}>
                       <span style={{ fontSize: "10px" }}>#{p.id}:</span>
                       <select value={currentSelectValue} onChange={(e) => onTeleportPiece(p.id, e.target.value)} style={{ padding: "2px", fontSize: "10px", background: "#fff" }}>
-                        <option value="-1">Bázis</option>
-                        {Array.from({ length: 52 }).map((_, i) => <option key={i} value={`${i}`}>{i}. m</option>)}
-                        {["0","1","2","3","4"].map(n => <option key={n} value={`H${n}`}>H{n}</option>)}
-                        <option value="H5">👑 CÉL</option>
+                        <option value="-1">Yard</option>
+                        {Array.from({ length: 52 }).map((_, i) => <option key={i} value={`${i}`}>{i}. tile</option>)}
+                        {["0","1","2","3","4"].map(n => <option key={n} value={`H${n}`}>Home {n}</option>)}
+                        <option value="H5">👑 GOAL</option>
                       </select>
                     </div>
                   );
@@ -176,11 +176,11 @@ export function GameControls({
         </div>
       )}
 
-      {/* CHAT PANEL */}
+      {/* QUICK CHAT PANEL */}
       <div style={{ background: "#f9f9f9", border: "1px solid #ddd", padding: "8px", borderRadius: "10px" }}>
-        <span style={{ fontSize: "11px", fontWeight: "bold", color: "#555", display: "block", marginBottom: "4px" }}>💬 Gyors üzenet küldése:</span>
+        <span style={{ fontSize: "11px", fontWeight: "bold", color: "#555", display: "block", marginBottom: "4px" }}>💬 Quick Chat Phrases:</span>
         <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-          {["Bocsi! 🙏", "Ez fájhatott! 💥", "Szeretlek! ❤️", "Szerencse! 🍀", "😂", "😎", "🔥"].map(msg => (
+          {["Sorry! 🙏", "Ouch! 💥", "Good Game! 🤝", "Lucky! 🍀", "😂", "😎", "🔥"].map(msg => (
             <button 
               key={msg} 
               onClick={() => onSendChat(msg)} 

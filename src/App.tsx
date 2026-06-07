@@ -7,7 +7,7 @@ import { GameControls } from "./components/GameControls";
 import { EndGame } from "./components/EndGame";
 
 export default function App() {
-  const [playerName, setPlayerName] = useState<string>("Dávid");
+  const [playerName, setPlayerName] = useState<string>("David");
   const [selectedBoard, setSelectedBoard] = useState<string>("classic");
   const [isTestMode, setIsTestMode] = useState<boolean>(false);
   const [cheatDiceValue, setCheatDiceValue] = useState<number>(0);
@@ -27,7 +27,7 @@ export default function App() {
 
   if (game.gameData?.status === "finished") {
     const iWon = game.gameData.winnerUid === game.user?.uid;
-    const winnerColor = game.getPlayerIndex(game.gameData.winnerUid) === 0 ? "KÉK" : "PIROS";
+    const winnerColor = game.getPlayerIndex(game.gameData.winnerUid) === 0 ? "BLUE" : "RED";
     return (
       <EndGame 
         iWon={iWon} 
@@ -73,24 +73,24 @@ export default function App() {
           </div>
         )}
 
-        {/* Felső sáv */}
+        {/* Top Navbar */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-          <h3 style={{ margin: 0, fontSize: "16px" }}>🎲 Ludo Csata {game.gameData.isTestModeActive && <span style={{color: "#f57f17", fontSize: "11px"}}>(Teszt Mód)</span>}</h3>
-          <button onClick={game.quitToMenu} style={{ background: "none", border: "none", color: "#d32f2f", fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}>Kilépés</button>
+          <h3 style={{ margin: 0, fontSize: "16px" }}>🎲 Ludo Battle {game.gameData.isTestModeActive && <span style={{color: "#f57f17", fontSize: "11px"}}>(Sandbox Mode)</span>}</h3>
+          <button onClick={game.quitToMenu} style={{ background: "none", border: "none", color: "#d32f2f", fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}>Quit</button>
         </div>
 
         <div style={{ background: "#f5f5f5", padding: "8px 10px", borderRadius: "8px", fontSize: "12px", marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>Színed: <span style={{ color: game.myPlayerIndex === 0 ? "#1e88e5" : "#e53935", fontWeight: "bold" }}>{game.getPlayerDisplayTitle(game.user?.uid ?? "")}</span></div>
-          <div style={{ fontSize: "10px", background: "#fff", padding: "3px 6px", borderRadius: "4px" }}>Kód: <code>{game.gameId}</code></div>
+          <div>Your Color: <span style={{ color: game.myPlayerIndex === 0 ? "#1e88e5" : "#e53935", fontWeight: "bold" }}>{game.getPlayerDisplayTitle(game.user?.uid ?? "")}</span></div>
+          <div style={{ fontSize: "10px", background: "#fff", padding: "3px 6px", borderRadius: "4px" }}>Code: <code>{game.gameId}</code></div>
         </div>
 
         {game.gameData.status === "waiting" && (
           <div style={{ background: "#fff8e1", border: "1px solid #ffe082", padding: "10px", borderRadius: "8px", textAlign: "center", marginBottom: "10px", fontSize: "13px", fontWeight: "bold", color: "#b78103" }}>
-            ⏳ Várakozás az ellenfélre...
+            ⏳ Waiting for your opponent to join...
           </div>
         )}
 
-        {/* A JÁTÉKVEZÉRLŐK */}
+        {/* Game Controls Panel */}
         <div style={{ marginBottom: "10px" }}>
           <GameControls 
             gameData={game.gameData} 
@@ -109,13 +109,13 @@ export default function App() {
           />
         </div>
 
-        {/* A KIRAJZOLT TÁBLA - Tisztán reszponzív, szétesés- és skálázásmentes elrendezés */}
+        {/* Game Board Container */}
         <div style={{ 
           display: "flex", 
           justifyContent: "center", 
           alignItems: "center",
           width: "100%",
-          maxWidth: "450px", // Tablet/Asztali nézet korlát, hogy ne nyúljon túl nagyra
+          maxWidth: "450px", 
           margin: "14px auto",
           touchAction: "manipulation",
           boxSizing: "border-box"
