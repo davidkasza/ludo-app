@@ -19,9 +19,21 @@ export function Lobby({
 }: LobbyProps) {
   const [inputId, setInputId] = useState("");
 
+  const handleCreateRoom = () => {
+    onCreateGame();
+  };
+
+  const handleJoinGame = () => {
+    onJoinGame(inputId);
+  };
+
+  const handleBoardChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedBoard(e.target.value);
+  };
+
   return (
-    <div style={{ 
-      padding: "40px 16px 20px", 
+    <div style={{
+      padding: "40px 16px 20px",
       fontFamily: "Arial, sans-serif",
       minHeight: "100vh",
       maxWidth: "100vw",
@@ -30,7 +42,6 @@ export function Lobby({
       justifyContent: "center",
       alignItems: "center",
       boxSizing: "border-box",
-      // 🔥 PRÉMIUM LUDO SÖTÉT HÁTTÉR
       backgroundColor: "#111827",
       backgroundImage: `
         radial-gradient(circle at 20% 20%, rgba(30, 136, 229, 0.15) 0%, transparent 40%),
@@ -41,20 +52,22 @@ export function Lobby({
       backgroundSize: "100% 100%, 100% 100%, 60px 60px, 60px 60px",
       backgroundPosition: "0 0, 0 0, 0 0, 30px 30px"
     }}>
-      <div style={{ 
+      <div style={{
         width: "100%",
         maxWidth: "420px",
-        background: "rgba(255, 255, 255, 0.04)", 
-        borderRadius: "24px", 
+        background: "rgba(255, 255, 255, 0.04)",
+        borderRadius: "24px",
         backdropFilter: "blur(12px)",
-        boxShadow: "0 12px 40px rgba(0,0,0,0.5)", 
-        border: "1px solid rgba(255, 255, 255, 0.08)", 
+        boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
         padding: "30px 20px",
-        boxSizing: "border-box"
+        boxSizing: "border-box",
+        position: "relative"
       }}>
+
         <div style={{ textAlign: "center", marginBottom: "25px" }}>
-          <span style={{ fontSize: "56px", display: "block", marginBottom: "5px" }}>🎲</span>
-          <h1 style={{ margin: "5px 0", fontSize: "28px", color: "#ffffff", fontWeight: "900" }}>Ludo Multiplayer</h1>
+          <span style={{ fontSize: "56px", display: "block", lineHeight: "1", marginBottom: "14px" }}>🎲</span>
+          <h1 style={{ margin: "0 0 6px 0", fontSize: "28px", color: "#ffffff", fontWeight: "900" }}>Ludo Multiplayer</h1>
           <p style={{ color: "#9ca3af", fontSize: "14px", margin: 0 }}>Classic board game for mobile devices</p>
         </div>
 
@@ -67,12 +80,12 @@ export function Lobby({
         {/* 1. Szekció */}
         <div style={{ marginBottom: "20px", background: "rgba(255,255,255,0.03)", padding: "14px", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.05)" }}>
           <h4 style={{ margin: "0 0 10px", color: "#e5e7eb" }}>1. Enter your nickname:</h4>
-          <input 
-            placeholder="e.g., David" 
-            value={playerName} 
-            onChange={(e) => setPlayerName(e.target.value)} 
-            maxLength={15} 
-            style={{ width: "100%", padding: "12px", fontSize: "15px", borderRadius: "10px", border: "2px solid #1e88e5", background: "rgba(0,0,0,0.2)", color: "#fff", boxSizing: "border-box", fontWeight: "bold", outline: "none" }} 
+          <input
+            placeholder="e.g., David"
+            value={playerName}
+            onChange={(e) => setPlayerName(e.target.value)}
+            maxLength={15}
+            style={{ width: "100%", padding: "12px", fontSize: "15px", borderRadius: "10px", border: "2px solid #1e88e5", background: "rgba(0,0,0,0.2)", color: "#fff", boxSizing: "border-box", fontWeight: "bold", outline: "none" }}
           />
         </div>
 
@@ -85,8 +98,8 @@ export function Lobby({
           </div>
 
           <div style={{ display: "flex", gap: "10px" }}>
-            <button onClick={onCreateGame} style={{ flex: 2, padding: "12px", fontSize: "15px", fontWeight: "bold", background: "#1e88e5", color: "#fff", border: "none", borderRadius: "10px", cursor: "pointer", boxShadow: "0 4px 10px rgba(30,136,229,0.3)" }}>Create Room</button>
-            <select value={selectedBoard} onChange={(e) => setSelectedBoard(e.target.value)} style={{ flex: 1, padding: "10px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.2)", background: "#1f2937", color: "#fff", outline: "none", fontSize: "13px", fontWeight: "bold" }}>
+            <button onClick={handleCreateRoom} style={{ flex: 2, padding: "12px", fontSize: "15px", fontWeight: "bold", background: "#1e88e5", color: "#fff", border: "none", borderRadius: "10px", cursor: "pointer", boxShadow: "0 4px 10px rgba(30,136,229,0.3)" }}>Create Room</button>
+            <select value={selectedBoard} onChange={handleBoardChange} style={{ flex: 1, padding: "10px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.2)", background: "#1f2937", color: "#fff", outline: "none", fontSize: "13px", fontWeight: "bold" }}>
               <option value="classic">Classic Map</option>
               <option value="test">Circular Loop</option>
             </select>
@@ -104,13 +117,13 @@ export function Lobby({
         <div style={{ background: "rgba(255,255,255,0.03)", padding: "14px", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.05)" }}>
           <h4 style={{ margin: "0 0 10px", color: "#e5e7eb" }}>3. Join an existing room:</h4>
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <input 
-              placeholder="Enter Room Code" 
-              value={inputId} 
-              onChange={(e) => setInputId(e.target.value)} 
-              style={{ padding: "12px", fontSize: "15px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.2)", background: "rgba(0,0,0,0.2)", color: "#fff", boxSizing: "border-box", textAlign: "center", letterSpacing: "1px", outline: "none" }} 
+            <input
+              placeholder="Enter Room Code"
+              value={inputId}
+              onChange={(e) => setInputId(e.target.value)}
+              style={{ padding: "12px", fontSize: "15px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.2)", background: "rgba(0,0,0,0.2)", color: "#fff", boxSizing: "border-box", textAlign: "center", letterSpacing: "1px", outline: "none" }}
             />
-            <button onClick={() => onJoinGame(inputId)} style={{ padding: "12px", fontSize: "15px", fontWeight: "bold", background: "#2e7d32", color: "#fff", border: "none", borderRadius: "10px", cursor: "pointer", boxShadow: "0 4px 10px rgba(46,125,50,0.3)" }}>Join Battle</button>
+            <button onClick={handleJoinGame} style={{ padding: "12px", fontSize: "15px", fontWeight: "bold", background: "#2e7d32", color: "#fff", border: "none", borderRadius: "10px", cursor: "pointer", boxShadow: "0 4px 10px rgba(46,125,50,0.3)" }}>Join Battle</button>
           </div>
         </div>
       </div>

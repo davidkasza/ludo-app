@@ -19,7 +19,6 @@ export function EndGame({ iWon, winnerName, winnerColor, onQuit }: EndGameProps)
       justifyContent: "center",
       alignItems: "center",
       boxSizing: "border-box",
-      // 🔥 PRÉMIUM LUDO SÖTÉT HÁTTÉR
       backgroundColor: "#111827",
       backgroundImage: `
         radial-gradient(circle at 20% 20%, rgba(30, 136, 229, 0.15) 0%, transparent 40%),
@@ -41,13 +40,24 @@ export function EndGame({ iWon, winnerName, winnerColor, onQuit }: EndGameProps)
         maxWidth: "400px",
         boxSizing: "border-box"
       }}>
-        <span style={{ fontSize: "72px", display: "block", marginBottom: "10px" }}>{iWon ? "🏆" : "👑"}</span>
-        <h1 style={{ color: iWon ? "#81c784" : "#ffb74d", margin: "10px 0" }}>
+        {/* 🔥 FIX: Blokkosítottuk az emojit és adtunk neki egy fix sormagasságot + alsó margót */}
+        <span style={{ 
+          fontSize: "64px", 
+          display: "block", 
+          lineHeight: "1", 
+          marginBottom: "16px" 
+        }}>
+          {iWon ? "🏆" : "👑"}
+        </span>
+        
+        <h1 style={{ color: iWon ? "#81c784" : "#ffb74d", margin: "0 0 16px 0", fontSize: "32px" }}>
           {iWon ? "Congratulations, You Won!" : "Game Over!"}
         </h1>
-        <p style={{ fontSize: "18px", fontWeight: "bold", marginBottom: "30px", color: "#e5e7eb" }}>
+        
+        <p style={{ fontSize: "18px", fontWeight: "bold", marginBottom: "32px", color: "#e5e7eb" }}>
           The match was won by <span style={{ color: winnerColor === "BLUE" ? "#42a5f5" : "#ff5252" }}>{winnerName}</span>!
         </p>
+        
         <button 
           onClick={onQuit}
           style={{ 
@@ -60,8 +70,7 @@ export function EndGame({ iWon, winnerName, winnerColor, onQuit }: EndGameProps)
             borderRadius: "12px", 
             width: "100%", 
             cursor: "pointer", 
-            boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-            transition: "all 0.2s"
+            boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
           }}
         >
           Back to Main Menu
