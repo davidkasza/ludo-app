@@ -28,7 +28,7 @@ export function GameControls({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%" }}>
       
-      {/* DICE AND PROFILE PANEL */}
+      {/* LUDO KING STYLE DICE AND PROFILE BAR */}
       <div style={{ 
         display: "flex", 
         alignItems: "center", 
@@ -59,12 +59,12 @@ export function GameControls({
               {gameData.status === "waiting" ? "Waiting..." : isMyTurn ? "YOUR TURN!" : getPlayerDisplayTitle(gameData.currentTurn)}
             </div>
             <div style={{ fontSize: "11px", color: "#666", fontWeight: "bold" }}>
-              {isMyTurn ? (gameData.hasRolled ? "Move a piece on board!" : "Tap the dice button to roll!") : "Waiting for opponent..."}
+              {isMyTurn ? (gameData.hasRolled ? "Select a token to move!" : "Tap the button to roll!") : "Waiting for opponent..."}
             </div>
           </div>
         </div>
 
-        {/* INTERACTIVE DICE BUTTON */}
+        {/* ROLL DICE BUTTON */}
         <button 
           onClick={onRollDice} 
           disabled={!canRoll}
@@ -97,44 +97,46 @@ export function GameControls({
         </div>
       )}
 
-      {/* TOKENS SELECTOR PANELS */}
-      <div style={{ display: "flex", justifyContent: "space-between", gap: "4px", margin: "2px 0" }}>
-        {gameData?.pieces?.[user?.uid ?? ""]?.map((p: any) => {
-          const isAtGoal = p.inHome && p.pos === 5;
-          const canMovePiece = isMyTurn && gameData.hasRolled && !isAtGoal && (p.pos === -1 ? gameData.diceValue === 6 : (!p.inHome || p.pos + gameData.diceValue <= 5));
+      {/* TOKENS SELECTOR PANEL - Now explicitly tied to gameData.isTestModeActive */}
+      {gameData?.isTestModeActive && (
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "4px", margin: "2px 0" }}>
+          {gameData?.pieces?.[user?.uid ?? ""]?.map((p: any) => {
+            const isAtGoal = p.inHome && p.pos === 5;
+            const canMovePiece = isMyTurn && gameData.hasRolled && !isAtGoal && (p.pos === -1 ? gameData.diceValue === 6 : (!p.inHome || p.pos + gameData.diceValue <= 5));
 
-          return (
-            <button 
-              key={p.id}
-              onClick={() => onMovePiece(p.id)} 
-              disabled={!canMovePiece} 
-              style={{ 
-                flex: 1, 
-                padding: "8px 2px", 
-                fontSize: "11px", 
-                fontWeight: "bold", 
-                background: isAtGoal ? "#fff9c4" : canMovePiece ? "#c8e6c9" : "#fff", 
-                border: canMovePiece ? "2px solid #2e7d32" : "1px solid #ddd", 
-                borderRadius: "8px", 
-                color: "#222222",
-                cursor: canMovePiece ? "pointer" : "not-allowed",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "2px",
-                boxShadow: canMovePiece ? "0 2px 6px rgba(46,125,50,0.2)" : "none"
-              }}
-            >
-              <span style={{ fontSize: "10px", opacity: 0.7 }}>Token #{p.id}</span>
-              <span style={{ fontSize: "11px" }}>
-                {isAtGoal ? "🏆" : p.pos === -1 ? "🏠" : p.inHome ? `H${p.pos}` : `${p.pos}`}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+            return (
+              <button 
+                key={p.id}
+                onClick={() => onMovePiece(p.id)} 
+                disabled={!canMovePiece} 
+                style={{ 
+                  flex: 1, 
+                  padding: "8px 2px", 
+                  fontSize: "11px", 
+                  fontWeight: "bold", 
+                  background: isAtGoal ? "#fff9c4" : canMovePiece ? "#c8e6c9" : "#fff", 
+                  border: canMovePiece ? "2px solid #2e7d32" : "1px solid #ddd", 
+                  borderRadius: "8px", 
+                  color: "#222222",
+                  cursor: canMovePiece ? "pointer" : "not-allowed",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "2px",
+                  boxShadow: canMovePiece ? "0 2px 6px rgba(46,125,50,0.2)" : "none"
+                }}
+              >
+                <span style={{ fontSize: "10px", opacity: 0.7 }}>Token #{p.id}</span>
+                <span style={{ fontSize: "11px" }}>
+                  {isAtGoal ? "🏆" : p.pos === -1 ? "🏠" : p.inHome ? `H${p.pos}` : `${p.pos}`}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-      {/* DEV CHEAT PANEL */}
+      {/* SANDBOX TOOLKIT CHEAT PANEL */}
       {gameData.isTestModeActive && (
         <div style={{ background: "#fffde7", border: "1px solid #fbc02d", borderRadius: "8px", padding: "4px 8px" }}>
           <button 
@@ -148,7 +150,7 @@ export function GameControls({
             <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "6px", paddingBottom: "4px" }}>
               {isMyTurn && !gameData.hasRolled && (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fff", padding: "4px", borderRadius: "4px", border: "1px solid #ffe082" }}>
-                  <span style={{ fontSize: "11px", fontWeight: "bold", color: "#b78103" }}>🔮 Set Next Roll Value:</span>
+                  <span style={{ fontSize: "11px", fontWeight: "bold", color: "#b78103" }}>🔮 Set Next Roll:</span>
                   <select value={cheatDiceValue} onChange={(e) => setCheatDiceValue(Number(e.target.value))} style={{ padding: "2px", fontSize: "11px", fontWeight: "bold" }}>
                     <option value={0}>Random</option>
                     {[1,2,3,4,5,6].map(n => <option key={n} value={n}>Force {n}</option>)}
@@ -178,9 +180,9 @@ export function GameControls({
 
       {/* QUICK CHAT PANEL */}
       <div style={{ background: "#f9f9f9", border: "1px solid #ddd", padding: "8px", borderRadius: "10px" }}>
-        <span style={{ fontSize: "11px", fontWeight: "bold", color: "#555", display: "block", marginBottom: "4px" }}>💬 Quick Chat Phrases:</span>
+        <span style={{ fontSize: "11px", fontWeight: "bold", color: "#555", display: "block", marginBottom: "4px" }}>💬 Quick Chat Emotes:</span>
         <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-          {["Sorry! 🙏", "Ouch! 💥", "Good Game! 🤝", "Lucky! 🍀", "😂", "😎", "🔥"].map(msg => (
+          {["Sorry! 🙏", "Ouch! 💥", "Love it! ❤️", "Good luck! 🍀", "😂", "😎", "🔥"].map(msg => (
             <button 
               key={msg} 
               onClick={() => onSendChat(msg)} 

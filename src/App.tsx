@@ -73,7 +73,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Top Navbar */}
+        {/* Top bar */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
           <h3 style={{ margin: 0, fontSize: "16px" }}>🎲 Ludo Battle {game.gameData.isTestModeActive && <span style={{color: "#f57f17", fontSize: "11px"}}>(Sandbox Mode)</span>}</h3>
           <button onClick={game.quitToMenu} style={{ background: "none", border: "none", color: "#d32f2f", fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}>Quit</button>
@@ -81,16 +81,38 @@ export default function App() {
 
         <div style={{ background: "#f5f5f5", padding: "8px 10px", borderRadius: "8px", fontSize: "12px", marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>Your Color: <span style={{ color: game.myPlayerIndex === 0 ? "#1e88e5" : "#e53935", fontWeight: "bold" }}>{game.getPlayerDisplayTitle(game.user?.uid ?? "")}</span></div>
-          <div style={{ fontSize: "10px", background: "#fff", padding: "3px 6px", borderRadius: "4px" }}>Code: <code>{game.gameId}</code></div>
+          <div style={{ fontSize: "10px", background: "#fff", padding: "3px 6px", borderRadius: "4px" }}>Room Code: <code>{game.gameId}</code></div>
         </div>
 
         {game.gameData.status === "waiting" && (
           <div style={{ background: "#fff8e1", border: "1px solid #ffe082", padding: "10px", borderRadius: "8px", textAlign: "center", marginBottom: "10px", fontSize: "13px", fontWeight: "bold", color: "#b78103" }}>
-            ⏳ Waiting for your opponent to join...
+            ⏳ Waiting for opponent...
           </div>
         )}
 
-        {/* Game Controls Panel */}
+        {/* 1. THE GAME BOARD (Now positioned upper on the layout sheet) */}
+        <div style={{ 
+          display: "flex", 
+          justifyContent: "center", 
+          alignItems: "center",
+          width: "100%",
+          maxWidth: "450px", 
+          margin: "10px auto 16px",
+          touchAction: "manipulation",
+          boxSizing: "border-box"
+        }}>
+          <GameBoard
+            board={game.board} 
+            gameData={game.gameData} 
+            user={game.user} 
+            localMovingPiece={game.localMovingPiece}
+            myPlayerIndex={game.myPlayerIndex} 
+            getPlayerIndex={game.getPlayerIndex} 
+            onPieceClick={game.movePiece}
+          />
+        </div>
+
+        {/* 2. THE GAME CONTROLS (Moved down here underneath the Game Board) */}
         <div style={{ marginBottom: "10px" }}>
           <GameControls 
             gameData={game.gameData} 
@@ -106,28 +128,6 @@ export default function App() {
             onTeleportPiece={game.teleportPiece} 
             onSendChat={game.sendQuickChat}
             getPlayerDisplayTitle={game.getPlayerDisplayTitle}
-          />
-        </div>
-
-        {/* Game Board Container */}
-        <div style={{ 
-          display: "flex", 
-          justifyContent: "center", 
-          alignItems: "center",
-          width: "100%",
-          maxWidth: "450px", 
-          margin: "14px auto",
-          touchAction: "manipulation",
-          boxSizing: "border-box"
-        }}>
-          <GameBoard
-            board={game.board} 
-            gameData={game.gameData} 
-            user={game.user} 
-            localMovingPiece={game.localMovingPiece}
-            myPlayerIndex={game.myPlayerIndex} 
-            getPlayerIndex={game.getPlayerIndex} 
-            onPieceClick={game.movePiece}
           />
         </div>
       </div>
